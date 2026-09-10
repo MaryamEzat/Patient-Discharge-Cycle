@@ -155,9 +155,15 @@ export function EarlyDraftPage({
               <span className="meta-badge">
                 Total Patients:{" "}
                 <strong>
-                  {patients.data?.length ?? d.crda1_countofpatients ?? 0}
+                  {patients.loading ? "..." : (patients.data?.length ?? 0)}
                 </strong>
               </span>
+              {submitted && (
+                <span className="meta-badge">
+                  Submitted By:{" "}
+                  <strong>{displayValue(d, "_and_submittedby_value")}</strong>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -191,7 +197,7 @@ export function EarlyDraftPage({
             ["Status", status],
             [
               "Patients",
-              String(patients.data?.length ?? d.crda1_countofpatients ?? 0),
+              patients.loading ? "..." : String(patients.data?.length ?? 0),
             ],
             ["Created", displayDateTime(d, "createdon")],
             ["Submission", displayDateTime(d, "and_submissiondate")],

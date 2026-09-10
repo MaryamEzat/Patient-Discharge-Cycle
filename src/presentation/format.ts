@@ -23,7 +23,10 @@ export function displayValue(
   const formatted =
     r[field + annotation] ??
     r[`_${base}_value${annotation}`] ??
-    r[base + "name"];
+    r[base + "name"] ??
+    r[field + "name"] ??
+    r[field + "_formatted"] ??
+    r[field + "Formatted"];
   if (!isBlank(formatted)) return text(formatted, empty);
   const raw = r[field];
   const mapped = mapKey

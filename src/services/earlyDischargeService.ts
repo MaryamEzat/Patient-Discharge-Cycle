@@ -48,10 +48,14 @@ export const earlyDischargeService = {
       }
       return drafts.map((d) => ({
         ...d,
-        crda1_countofpatients: counts.get(d.and_earlydischargeid.toLowerCase()) ?? d.crda1_countofpatients ?? 0,
+        crda1_countofpatients:
+          counts.get(d.and_earlydischargeid.toLowerCase()) ?? 0,
       }));
     } catch {
-      return drafts;
+      return drafts.map((d) => ({
+        ...d,
+        crda1_countofpatients: 0,
+      }));
     }
   },
   async get(id: string) {
