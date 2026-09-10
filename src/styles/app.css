@@ -625,10 +625,11 @@ button:disabled {
 }
 
 .worklist table, .worklist-table {
-  min-width: 2400px;
+  min-width: 4900px;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: fixed;
 }
 
 .worklist th, .worklist td, .worklist-table th, .worklist-table td {
@@ -638,6 +639,8 @@ button:disabled {
   font-size: 13px;
   vertical-align: middle;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .worklist thead th, .worklist-table thead th {

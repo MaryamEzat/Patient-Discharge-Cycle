@@ -67,16 +67,16 @@ export const columnWidths: Record<string, string> = {
   bed: "100px",
   nurseStation: "160px",
   lastActivity: "160px",
-  physician: "180px",
-  admissionDoctor: "180px",
+  physician: "200px",
+  admissionDoctor: "200px",
   physicianDischargeDate: "180px",
   admissionDate: "160px",
   floor: "120px",
   age: "80px",
   paymentType: "140px",
-  contract: "140px",
-  contractor: "140px",
-  specialty: "160px",
+  contract: "240px",
+  contractor: "240px",
+  specialty: "200px",
   hasHomeMedications: "160px",
   homeMedicationsDate: "160px",
   createdDate: "160px",
@@ -320,33 +320,46 @@ export function WorklistPage({
                               {expanded.has(id) ? "⌄" : "›"}
                             </button>
                           </td>
-                          {worklistColumns.map(([, key]) => (
-                            <td
-                              key={key}
-                              style={{ width: columnWidths[key], minWidth: columnWidths[key], maxWidth: columnWidths[key] }}
-                              className={
-                                key === "patientName" ? "patient-cell" : "small"
-                              }
-                            >
-                              {key === "status" ? (
-                                <StatusBadge label={p.status} />
-                              ) : key === "patientName" ? (
-                                <button
-                                  className="patient-link name"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    open(id);
-                                  }}
-                                >
-                                  {p.patientName || "-"}
-                                </button>
-                              ) : key === "currentStep" ? (
-                                current?.crad2_subject || p.currentStep || "-"
-                              ) : (
-                                p[key] || "-"
-                              )}
-                            </td>
-                          ))}
+                          {worklistColumns.map(([, key]) => {
+                            const val =
+                              key === "status"
+                                ? p.status
+                                : key === "patientName"
+                                  ? p.patientName
+                                  : key === "currentStep"
+                                    ? current?.crad2_subject || p.currentStep || "-"
+                                    : p[key] || "-";
+                            return (
+                              <td
+                                key={key}
+                                style={{
+                                  width: columnWidths[key],
+                                  minWidth: columnWidths[key],
+                                  maxWidth: columnWidths[key],
+                                }}
+                                className={
+                                  key === "patientName" ? "patient-cell" : "small"
+                                }
+                                title={val !== "-" ? String(val) : undefined}
+                              >
+                                {key === "status" ? (
+                                  <StatusBadge label={p.status} />
+                                ) : key === "patientName" ? (
+                                  <button
+                                    className="patient-link name"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      open(id);
+                                    }}
+                                  >
+                                    {p.patientName || "-"}
+                                  </button>
+                                ) : (
+                                  val
+                                )}
+                              </td>
+                            );
+                          })}
                         </tr>
                         {expanded.has(id) && (
                           <tr className="steps-row">
