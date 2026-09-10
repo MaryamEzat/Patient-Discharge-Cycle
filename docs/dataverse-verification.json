@@ -1,0 +1,329 @@
+{
+  "checkedAt": "2026-09-10T12:07:50.117Z",
+  "tables": [
+    {
+      "table": "and_delayreasons",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "crad2_dischargeactivity",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_whatsappnotification",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_earlydischarge",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_earlydischarge_ipdvisits",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_inpatientlist",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "crad2_patientdischarge",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "team",
+      "readable": true,
+      "hasRecords": true
+    },
+    {
+      "table": "systemuser",
+      "readable": true,
+      "hasRecords": true
+    }
+  ],
+  "relationships": [
+    {
+      "table": "and_whatsappnotification",
+      "SchemaName": "and_whatsappnotification_Patient_crad2_patientdischarge",
+      "ReferencingAttribute": "and_patient",
+      "ReferencedEntity": "crad2_patientdischarge",
+      "ReferencingEntityNavigationPropertyName": "and_Patient"
+    },
+    {
+      "table": "crad2_dischargeactivity",
+      "SchemaName": "crad2_dischargeactivity_Discharge_crad2_patientdischarge",
+      "ReferencingAttribute": "crad2_discharge",
+      "ReferencedEntity": "crad2_patientdischarge",
+      "ReferencingEntityNavigationPropertyName": "crad2_Discharge"
+    },
+    {
+      "table": "crad2_dischargeactivity",
+      "SchemaName": "crad2_dischargeactivity_ForwardToTeam_team",
+      "ReferencingAttribute": "crad2_forwardtoteam",
+      "ReferencedEntity": "team",
+      "ReferencingEntityNavigationPropertyName": "crad2_ForwardToTeam"
+    },
+    {
+      "table": "crad2_dischargeactivity",
+      "SchemaName": "and_crad2_dischargeactivity_DelayReason_and_delayreasons",
+      "ReferencingAttribute": "and_delayreason",
+      "ReferencedEntity": "and_delayreasons",
+      "ReferencingEntityNavigationPropertyName": "and_DelayReason"
+    },
+    {
+      "table": "and_earlydischarge_ipdvisits",
+      "SchemaName": "and_earlydischarge_ipdvisits_EarlyDischarge_and_earlydischarge",
+      "ReferencingAttribute": "and_earlydischarge",
+      "ReferencedEntity": "and_earlydischarge",
+      "ReferencingEntityNavigationPropertyName": "and_EarlyDischarge"
+    },
+    {
+      "table": "and_earlydischarge_ipdvisits",
+      "SchemaName": "and_earlydischarge_ipdvisits_PatientCode_and_inpatientlist",
+      "ReferencingAttribute": "and_patientcode",
+      "ReferencedEntity": "and_inpatientlist",
+      "ReferencingEntityNavigationPropertyName": "and_PatientCode"
+    }
+  ],
+  "fieldChecks": [
+    {
+      "table": "crad2_patientdischarge",
+      "select": [
+        "crad2_patientdischargeid",
+        "crad2_dischargereference",
+        "crad2_patientname",
+        "new_patientid",
+        "_and_patientcode_value",
+        "crad2_visitid",
+        "crad2_admissiondate",
+        "new_age",
+        "crad2_room",
+        "crad2_bed",
+        "crad2_floor",
+        "new_nursestation",
+        "crad2_doctorname",
+        "crad2_specialty",
+        "new_diagnosis",
+        "new_paymenttype",
+        "new_contract",
+        "new_contractor",
+        "crad2_phonenumber",
+        "crad2_status",
+        "crda1_currentstepf",
+        "crad2_pendingon",
+        "and_earlyflag",
+        "and_ishomemedication",
+        "and_homemedicationtime",
+        "and_homemedicationsdate",
+        "and_homemedicationsflag",
+        "new_lastactivity",
+        "crad2_los",
+        "crad2_losdays",
+        "crda1_outpatientclearancedate",
+        "new_outpatientpharmacypending",
+        "and_physicaltat",
+        "and_physicaltat_date",
+        "and_physicaltat_state",
+        "and_physicaldischargetat",
+        "and_physiciandischargedate",
+        "crad2_dischargedate",
+        "and_slacategory",
+        "and_cancellationreason",
+        "and_cancelled",
+        "crda1_whatsappflag",
+        "new_gender",
+        "and_dischargetype",
+        "_owningbusinessunit_value",
+        "createdon",
+        "cr301_filescanstatus",
+        "_ownerid_value",
+        "modifiedon",
+        "statecode",
+        "statuscode"
+      ],
+      "valid": true
+    },
+    {
+      "table": "crad2_patientdischarge",
+      "select": [
+        "crad2_patientdischargeid",
+        "crad2_dischargereference",
+        "crad2_patientname",
+        "new_patientid",
+        "_and_patientcode_value",
+        "crad2_visitid",
+        "crad2_admissiondate",
+        "new_age",
+        "crad2_room",
+        "crad2_bed",
+        "crad2_floor",
+        "new_nursestation",
+        "crad2_doctorname",
+        "crad2_specialty",
+        "new_diagnosis",
+        "new_paymenttype",
+        "new_contract",
+        "new_contractor",
+        "crad2_phonenumber",
+        "crad2_status",
+        "crda1_currentstepf",
+        "crad2_pendingon",
+        "and_earlyflag",
+        "and_ishomemedication",
+        "and_homemedicationtime",
+        "and_homemedicationsdate",
+        "and_homemedicationsflag",
+        "new_lastactivity",
+        "crad2_los",
+        "crad2_losdays",
+        "crda1_outpatientclearancedate",
+        "new_outpatientpharmacypending",
+        "and_physicaltat",
+        "and_physicaltat_date",
+        "and_physicaltat_state",
+        "and_physicaldischargetat",
+        "and_physiciandischargedate",
+        "crad2_dischargedate",
+        "and_slacategory",
+        "and_cancellationreason",
+        "and_cancelled",
+        "crda1_whatsappflag",
+        "new_gender",
+        "and_dischargetype",
+        "_owningbusinessunit_value",
+        "createdon",
+        "cr301_filescanstatus",
+        "_ownerid_value",
+        "modifiedon",
+        "statecode",
+        "statuscode"
+      ],
+      "valid": true,
+      "hasRecords": true
+    },
+    {
+      "table": "crad2_dischargeactivity",
+      "select": [
+        "crad2_dischargeactivityid",
+        "crad2_subject",
+        "crad2_statge",
+        "crad2_status",
+        "and_startdate",
+        "crad2_actiondate",
+        "crda1_pendingdate",
+        "_crad2_previousactivity_value",
+        "_ownerid_value",
+        "_crad2_owner_value",
+        "new_comment",
+        "new_attachment",
+        "new_attachment_name",
+        "and_isdelayed",
+        "_and_delayreason_value",
+        "and_tat",
+        "and_activityclearancetatmins",
+        "crad2_wasforwarded",
+        "_crad2_forwardtoteam_value",
+        "_and_teamlookup_value",
+        "new_forwardtoteam",
+        "crda1_forwardtoteamdate",
+        "and_modifiedby",
+        "crad2_escalation",
+        "new_billingaction",
+        "crad2_billingcomment",
+        "crad2_billingstatus",
+        "crad2_completechargingitems",
+        "crda1_hidefinancialdischarge",
+        "new_homemedications",
+        "crad2_homemedications",
+        "crad2_pharmacycomments",
+        "new_pharmacyreturn",
+        "crad2_pharmacyreturn",
+        "crad2_pharmacystatus",
+        "new_dischargeinstructions",
+        "new_followupdate",
+        "and_didyoureceivethedischargesummary",
+        "and_didyoureceiveyourhomemedications",
+        "and_doyouhaveafollowupappointment",
+        "modifiedon",
+        "statecode",
+        "statuscode"
+      ],
+      "valid": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_earlydischarge",
+      "select": [
+        "and_earlydischargeid",
+        "and_dischargedate",
+        "and_statusnew",
+        "crda1_countofpatients",
+        "and_submissiondate",
+        "_and_submittedby_value",
+        "createdon"
+      ],
+      "valid": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_earlydischarge_ipdvisits",
+      "select": [
+        "and_earlydischarge_ipdvisitsid",
+        "and_name",
+        "_and_patientcode_value",
+        "crda1_visitid",
+        "and_dischargetype",
+        "and_cancellationreason",
+        "and_is_submitted",
+        "createdon",
+        "modifiedon"
+      ],
+      "valid": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_inpatientlist",
+      "select": [
+        "and_inpatientlistid",
+        "and_name",
+        "and_patientname",
+        "and_visitid",
+        "and_bed",
+        "and_specialty",
+        "and_admissiondate",
+        "and_nursestation",
+        "and_admissiondoctor"
+      ],
+      "valid": true,
+      "hasRecords": true
+    },
+    {
+      "table": "and_whatsappnotification",
+      "select": [
+        "and_whatsappnotificationid",
+        "and_id",
+        "and_comment",
+        "_and_patient_value",
+        "createdon",
+        "_createdby_value",
+        "statuscode",
+        "statecode",
+        "_ownerid_value"
+      ],
+      "valid": true,
+      "hasRecords": true
+    }
+  ],
+  "completeWorklistRead": {
+    "rows": 3250,
+    "pages": 13,
+    "complete": false,
+    "error": "Full dataset read exceeded the three-minute diagnostic budget"
+  }
+}

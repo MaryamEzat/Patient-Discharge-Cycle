@@ -1,0 +1,2797 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Patient Discharge Management</title>
+    <style>
+	    :root{
+	        --green:#183329;
+	        --green2:#274a3b;
+	        --bronze:#b67c50;
+	        --cream:#f5f0e9;
+	        --paper:#fffdfa;
+	        --ink:#1d2922;
+	        --soft:#657067;
+	        --line:#ded6ca;
+	        --sage:#e8f0e8;
+	        --gold:#fbf0e4;
+	        --red:#ad5147;
+	        --redbg:#fae9e6;
+	        --amber:#a96629;
+	        --amberbg:#fcf0df;
+	        --blue:#356887;
+	        --bluebg:#e7f0f5;
+	        --shadow:0 7px 20px rgba(38,30,22,.045);
+	        --shadow-strong:0 18px 44px rgba(38,30,22,.14);
+	        --radius:14px;
+	        --radius-sm:8px;
+	    }
+	    *{box-sizing:border-box}
+	    body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:13px;line-height:1.45}
+	    button,input,select,textarea{font:inherit}
+	    button{min-height:36px}
+	    .hidden{display:none!important}
+	    .app-root{min-height:100vh;padding-left:70px}
+	    .nav-rail{position:fixed;inset:0 auto 0 0;width:70px;background:var(--green);display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px 10px;z-index:80;box-shadow:8px 0 26px rgba(24,51,41,.12)}
+	    .rail-mark{width:42px;height:42px;border-radius:13px;border:1px solid rgba(255,253,250,.18);background:rgba(255,253,250,.08);display:flex;align-items:center;justify-content:center;color:#f1d4bd;font-size:15px;font-weight:900;letter-spacing:.04em}
+	    .main-nav{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;margin-top:6px}
+	    .tab-btn{width:48px;height:48px;padding:0;border:1px solid transparent;border-radius:12px;background:transparent;color:#dfd4c7;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
+	    .tab-btn svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none}
+	    .tab-btn:hover{background:rgba(255,253,250,.1);color:var(--paper)}
+	    .tab-btn.active{background:var(--paper);color:var(--green);box-shadow:inset 3px 0 0 var(--bronze),0 10px 22px rgba(9,20,15,.18)}
+	    .top-context{height:68px;padding:0 26px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:22px;position:sticky;top:0;z-index:50}
+	    .header-left{min-width:260px;display:flex;flex-direction:column;gap:1px}
+	    .brand{font-size:15px;font-weight:850;color:var(--ink);line-height:1.2;letter-spacing:0}
+	    .subtitle{font-size:10px;font-weight:850;letter-spacing:.11em;text-transform:uppercase;color:var(--bronze)}
+	    .context-title{margin-left:auto;display:flex;align-items:center;gap:16px;min-width:0}
+	    .context-chip{display:flex;flex-direction:column;gap:1px;min-width:0}
+	    .context-label,.eyebrow{font-size:10px;font-weight:850;letter-spacing:.11em;text-transform:uppercase;color:var(--bronze)}
+	    .context-value{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap}
+	    .header-right{display:flex;gap:10px;align-items:center;min-width:0}
+	    .icon-btn{width:36px;height:36px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);color:var(--green);cursor:pointer;font-size:15px;display:inline-flex;align-items:center;justify-content:center}
+	    .icon-btn:hover{border-color:var(--bronze);background:#faf6f1}
+	    .last-updated{font-size:12px;color:var(--soft);white-space:nowrap}
+	    .user-info{min-width:0}
+	    .user-inline{display:flex;align-items:center;gap:8px;min-width:0}
+	    .avatar{width:32px;height:32px;border-radius:50%;background:var(--green);color:var(--paper);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:inset 0 0 0 1px rgba(255,253,250,.18)}
+	    .main{width:100%;max-width:1540px;margin:0 auto;padding:30px 36px 48px}
+    .tab-panel{display:block}
+	    .section-surface,.worklist,#earlyDraftHeader,#earlyList,.timeline,.current-activity,.activity-form,.patient-summary,.discharge-alerts{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+	    .kpi-grid{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr;gap:12px;margin-bottom:18px}
+	    .kpi{min-height:92px;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between}
+	    .kpi:first-child{background:var(--green);border-color:var(--green);color:var(--paper)}
+	    .kpi:first-child .kpi-title{color:#d9b697}
+	    .kpi:first-child .kpi-value{color:var(--paper)}
+	    .kpi .kpi-title{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.11em;color:var(--bronze)}
+	    .kpi .kpi-value{font-size:29px;font-weight:900;color:var(--ink);line-height:1}
+    .filters{margin-bottom:12px}
+	    .toolbar{min-height:52px;margin-bottom:14px;padding:10px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+	    input,select,textarea{border:1px solid var(--line);border-radius:var(--radius-sm);background:#fffdfa;color:var(--ink);outline:none}
+	    input,select{height:36px;padding:0 10px}
+	    textarea{padding:9px 10px;resize:vertical}
+	    input:focus,select:focus,textarea:focus,button:focus-visible{border-color:var(--bronze);outline:3px solid rgba(182,124,80,.34);outline-offset:2px}
+    .toolbar input{min-width:340px;flex:1}
+    .toolbar input[type="date"]{min-width:160px;flex:0 0 auto}
+    .toolbar select{min-width:160px}
+	    button,.btn-primary{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);color:var(--green);padding:0 12px;cursor:pointer;font-weight:800}
+	    button:hover{background:#faf6f1;border-color:var(--bronze)}
+	    .btn-primary,#refreshWorklist{border-color:var(--bronze);background:var(--bronze);color:#fff;box-shadow:none}
+	    .btn-primary:hover,#refreshWorklist:hover{background:#a66f46}
+	    .btn-submit{border-color:var(--green);background:var(--green);color:var(--paper)}
+	    .btn-submit:hover{background:var(--green2);border-color:var(--green2)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .worklist{padding:0;overflow:auto}
+    .worklist table,.worklist-table{width:100%;border-collapse:separate;border-spacing:0}
+	    .worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;vertical-align:middle;white-space:nowrap}
+	    .worklist thead th,.worklist-table thead th{position:sticky;top:0;z-index:1;background:#e5dcd1;color:#4b554d;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em}
+    .worklist tbody tr,.worklist-table tbody tr{transition:background .12s ease,box-shadow .12s ease}
+	    .worklist tbody tr:hover,.worklist-table tbody tr:hover{background:#fff9f2;cursor:pointer}
+    .worklist td.patient-cell{white-space:normal}
+	    .worklist td.patient-cell .name{font-weight:900;color:var(--ink);text-transform:uppercase;font-size:12px;letter-spacing:.02em}
+	    .worklist td.patient-cell .meta{font-size:12px;color:var(--soft);margin-top:2px}
+	    .worklist tr.delayed{box-shadow:inset 3px 0 0 var(--red)}
+	    .expand-cell{width:44px;text-align:center!important;padding:0 6px!important}
+	    .expand-btn{width:30px;height:30px;min-height:30px;padding:0;border-color:transparent;background:transparent;color:var(--soft);font-size:18px;line-height:1}
+	    .expand-btn:hover,.expand-btn.active{border-color:var(--line);background:#f7f3ed;color:var(--green)}
+	    .steps-row td{padding:0!important;background:#fbf7f1;border-bottom:1px solid var(--line)}
+	    .steps-row:hover{background:#fbf7f1!important;cursor:default!important}
+	    .steps-subgrid{margin:10px 18px 14px 58px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:10px}
+	    .steps-list{display:grid;gap:8px}
+	    .step-card{display:grid;grid-template-columns:30px minmax(230px,1fr) minmax(190px,.55fr);gap:10px;align-items:start;padding:10px;border:1px solid #eee6db;border-radius:var(--radius-sm);background:#fffdfa}
+	    .step-card:hover{background:#fff9f2}
+	    .step-index{width:24px;height:24px;border-radius:50%;background:var(--bluebg);border:1px solid #d3e2eb;color:var(--blue);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center}
+	    .step-main-title{font-size:13px;font-weight:900;color:var(--ink)}
+	    .step-main-sub{font-size:12px;color:var(--soft);margin-top:3px}
+	    .step-meta{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+	    .step-detail-grid{grid-column:2/4;display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:6px 18px;padding-top:2px}
+	    .step-detail{font-size:12px;color:var(--soft);min-width:0;overflow-wrap:anywhere}
+	    .step-detail strong{display:inline-block;margin-right:5px;color:#4b554d;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+	    .steps-footer{padding:8px 2px 0;color:var(--soft);font-size:12px}
+	    .steps-loading{padding:16px;color:var(--soft)}
+    .status-badge{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid transparent;white-space:nowrap}
+	    .status-success{background:var(--sage);border-color:#d3dfd3;color:#356140}
+	    .status-info{background:var(--bluebg);border-color:#d3e2eb;color:var(--blue)}
+	    .status-warning{background:var(--amberbg);border-color:#ecd6bb;color:var(--amber)}
+	    .status-danger{background:var(--redbg);border-color:#edcfc9;color:var(--red)}
+	    .status-forward{background:var(--gold);border-color:#ead7c6;color:var(--green2)}
+    .patient-panel{background:transparent}
+    .patient-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    #backToWorklist{padding:0 12px}
+	    .patient-header{font-size:28px;font-weight:900;color:var(--ink);letter-spacing:-.01em}
+    .patient-body{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:14px;align-items:start}
+    .early-workspace{display:flex;flex-direction:column;gap:14px}
+    .early-draft-overview{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--bronze);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;display:grid;grid-template-columns:minmax(220px,1.1fr) repeat(5,minmax(100px,.8fr)) minmax(120px,auto);gap:14px;align-items:center}
+    .early-overview-title{min-width:0}
+    .early-overview-title .summary-name{font-size:18px}
+    .early-overview-title .summary-ref{font-size:12px}
+    .early-metric{border-left:1px solid #eee6db;padding-left:14px;min-width:0}
+    .early-metric .summary-label{margin-bottom:4px}
+    .early-metric .summary-value{font-size:13px;font-weight:850}
+    .early-submit-area{display:flex;justify-content:flex-end;align-items:center}
+    .early-draft-layout{display:grid;grid-template-columns:minmax(300px,370px) minmax(0,1fr);gap:14px;align-items:start}
+    .early-add-panel,.early-patient-panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+    .early-add-panel{border-left:4px solid var(--bronze);position:sticky;top:84px}
+    .early-patient-panel{min-width:0}
+    .early-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .early-panel-title{font-size:16px;font-weight:900;color:var(--ink)}
+    .patient-summary{padding:14px;position:sticky;top:84px}
+	    .summary-title{padding-bottom:12px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+	    .summary-name{font-size:18px;font-weight:900}
+	    .summary-ref{font-size:12px;color:var(--soft);margin-top:2px}
+	    .summary-row{display:grid;grid-template-columns:104px minmax(0,1fr);gap:8px;padding:8px 0;border-bottom:1px solid #eee6db}
+    .summary-row:last-child{border-bottom:0}
+	    .summary-label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--bronze)}
+	    .summary-value{font-size:13px;color:var(--ink);font-weight:700;min-width:0;overflow-wrap:anywhere}
+    .patient-main{min-width:0;display:grid;grid-template-columns:minmax(320px,.95fr) minmax(380px,1.2fr);gap:14px}
+    .discharge-alerts{grid-column:1/-1;padding:14px;min-height:220px}
+	    .subgrid-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+	    .subgrid-title{font-size:16px;font-weight:900;color:var(--ink)}
+	    .subgrid-actions{display:flex;gap:8px;align-items:center}
+	    .subgrid-empty{padding:48px 12px;text-align:center;color:var(--soft)}
+	    .quick-create-modal{position:fixed;right:0;top:0;bottom:0;width:min(620px,94vw);background:var(--paper);z-index:1000;box-shadow:var(--shadow-strong);border-left:1px solid var(--line);display:flex;flex-direction:column}
+	    .quick-create-head{padding:22px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}
+	    .quick-create-title{font-size:24px;font-weight:900;color:var(--ink)}
+	    .quick-create-body{padding:24px;display:flex;flex-direction:column;gap:16px}
+	    .lookup-pill{display:inline-flex;align-items:center;gap:8px;max-width:100%;min-height:36px;padding:6px 10px;background:#eef4fb;border-radius:var(--radius-sm);color:#0f5ca8;font-weight:800}
+	    .lookup-pill span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .current-activity,.activity-form,.timeline{padding:14px}
+	    .current-activity{border-left:4px solid var(--bronze)}
+    .timeline{grid-row:span 2}
+	    .panel-label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.11em;color:var(--bronze);margin-bottom:8px}
+	    .activity-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+	    .activity-title{font-size:17px;font-weight:900;color:var(--ink)}
+	    .activity-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;color:var(--soft)}
+    .timeline-steps{position:relative;padding-left:25px}
+	    .timeline-steps::before{content:'';position:absolute;left:7px;top:10px;bottom:10px;width:1px;background:var(--line)}
+    .timeline-node{position:relative;padding:9px 0 11px}
+	    .timeline-node .node-dot{position:absolute;left:-24px;top:12px;width:15px;height:15px;border-radius:50%;background:var(--paper);border:3px solid var(--line)}
+	    .node-completed .node-dot{background:#356140;border-color:var(--sage)}
+	    .node-current .node-dot{background:var(--bronze);border-color:#ead7c6;box-shadow:0 0 0 4px rgba(182,124,80,.13)}
+	    .node-pending .node-dot{background:var(--amber);border-color:var(--amberbg)}
+	    .node-delayed .node-dot{background:var(--red);border-color:var(--redbg)}
+	    .timeline-title{font-weight:900;color:var(--ink);font-size:12px;letter-spacing:.02em;text-transform:uppercase}
+	    .timeline-meta{font-size:12px;color:var(--soft);margin-top:2px}
+    .activity-form-inner{display:flex;flex-direction:column;gap:12px}
+    .form-row{display:grid;grid-template-columns:135px minmax(0,1fr);gap:10px;align-items:start}
+	    .form-row .label{padding-top:8px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--bronze)}
+    .form-row input,.form-row select,.form-row textarea{width:100%}
+    .form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:2px}
+	    .lookup-wrap{position:relative;width:100%}
+	    .lookup-input-wrap{position:relative}
+	    .lookup-input-wrap input{padding-right:36px}
+	    .lookup-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--soft);pointer-events:none}
+	    .lookup-results{position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:30;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow-strong);overflow:hidden;max-height:250px;overflow-y:auto}
+	    .lookup-results.hidden{display:none!important}
+	    .lookup-result{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid #eee6db;background:var(--paper);cursor:pointer;color:var(--ink)}
+	    .lookup-result:last-child{border-bottom:0}
+	    .lookup-result:hover,.lookup-result.selected{background:#fff9f2}
+	    .lookup-result-icon{width:18px;height:18px;border:1px solid var(--soft);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;color:var(--soft);font-size:12px;line-height:1}
+	    .lookup-result-label{font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+	    .lookup-state{padding:10px 12px;color:var(--soft);background:var(--paper)}
+	    .team-result,.patient-result{padding:8px 10px;margin-top:4px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);cursor:pointer}
+	    .team-result:hover,.patient-result:hover,.patient-result.selected{background:#fff9f2;border-color:var(--bronze)}
+	    .patient-result .name{font-weight:900;color:var(--ink);text-transform:uppercase}
+	    .patient-result .meta{font-size:12px;color:var(--soft);margin-top:2px}
+	    .draft-form{display:flex;flex-direction:column;gap:12px}
+	    .draft-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+	    .draft-patient-list{max-height:260px;overflow:auto;border-top:1px solid var(--line);padding-top:8px}
+	    .draft-existing{max-height:560px;overflow:auto}
+	    .draft-existing .worklist-table th,.draft-existing .worklist-table td{padding:9px 10px}
+	    .draft-existing .patient-name-col{min-width:210px;white-space:normal}
+	    .draft-existing .patient-name-col .name{font-weight:850;text-transform:uppercase;font-size:12px}
+	    #earlyDraftHeader{padding:14px 18px;margin-bottom:12px}
+    #earlyList{padding:0;overflow:auto}
+	    .loading,.empty-state{padding:18px;color:var(--soft)}
+	    .small{font-size:12px;color:var(--soft)}
+	    #dataverseError{max-width:420px;text-align:right;color:var(--red)}
+	    .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--paper);padding:0;border-radius:17px;box-shadow:var(--shadow-strong);z-index:1000;max-width:90%;width:680px;border:1px solid var(--line);overflow:hidden}
+	    .modal>div{padding:21px}
+	    .modal-backdrop{position:fixed;inset:0;background:rgba(13,28,20,.62);z-index:900}
+	    @media (max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.patient-body,.patient-main,.early-draft-layout{grid-template-columns:1fr}.early-draft-overview{grid-template-columns:repeat(2,minmax(150px,1fr))}.early-overview-title{grid-column:1/-1}.early-add-panel{position:static}.patient-summary{position:static}.header-left{min-width:auto}.top-context{height:auto;min-height:68px;align-items:flex-start;padding:12px 16px;flex-wrap:wrap}.context-title{margin-left:0;width:100%;justify-content:space-between}.header-right{margin-left:auto}}
+	    @media (max-width:760px){.app-root{padding-left:0;padding-top:66px}.nav-rail{inset:0 0 auto 0;width:auto;height:66px;flex-direction:row;justify-content:flex-start}.main-nav{flex-direction:row;width:auto;margin-top:0}.tab-btn{width:44px;height:44px}.top-context{top:66px}.main{padding:18px 14px 32px}.toolbar input{min-width:100%}.kpi-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.patient-toolbar{align-items:flex-start;flex-direction:column}.worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:9px 10px}.steps-subgrid{margin:8px 10px 12px 44px}.step-card{grid-template-columns:28px minmax(180px,1fr)}.step-meta,.step-detail-grid{grid-column:2}.step-detail-grid{grid-template-columns:1fr}.last-updated{display:none}}
+    </style>
+</head>
+<body>
+	    <div id="app" class="app-root">
+	        <aside class="nav-rail" aria-label="Patient Discharge navigation">
+	            <div class="rail-mark">PD</div>
+	            <nav class="main-nav" role="navigation" aria-label="Main">
+	                <button data-tab="worklist" class="tab-btn active" title="Discharge Worklist" aria-label="Discharge Worklist">
+	                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
+	                </button>
+	                <button data-tab="early" class="tab-btn" title="Early Discharge" aria-label="Early Discharge">
+	                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5l3 2"></path><path d="M4 13a8 8 0 1 0 2.3-5.7"></path><path d="M4 4v5h5"></path></svg>
+	                </button>
+	            </nav>
+	        </aside>
+	
+	        <header class="top-context">
+	            <div class="header-left">
+	                <div class="subtitle">PATIENT DISCHARGE OPERATIONS</div>
+	                <div class="brand">Patient Discharge / Hospital Operations</div>
+	            </div>
+	            <div class="context-title">
+	                <div class="context-chip"><span class="context-label">Business Unit</span><span class="context-value">AHJ</span></div>
+	                <div class="context-chip"><span class="context-label">Updated</span><span id="lastUpdated" class="context-value last-updated">-</span></div>
+	                <div class="context-chip"><span class="context-label">Attention</span><span id="attentionSummary" class="context-value">Pending review</span></div>
+	            </div>
+	            <div class="header-right">
+	                <button id="headerRefresh" class="icon-btn" title="Refresh" aria-label="Refresh">
+	                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.7"></path><path d="M4 12A8 8 0 0 1 17.7 6.3"></path><path d="M17 2v5h5"></path><path d="M7 22v-5H2"></path></svg>
+	                </button>
+	                <div id="dataverseError" class="small"></div>
+	                <div class="user-info" id="currentUser">Loading user...</div>
+	            </div>
+	        </header>
+
+        <main class="main">
+            <section id="worklist" class="tab-panel">
+                <div id="kpis" class="kpi-grid"></div>
+                <div class="toolbar">
+                    <input id="searchBox" placeholder="Search by Patient Name / MRN / Visit ID / Phone" />
+                    <select id="statusFilter"><option value="">All Statuses</option></select>
+                    <input id="dischargeDateFilter" type="date" title="Filter by Discharge Date" aria-label="Filter by Discharge Date" />
+                    <button id="clearDateFilter" type="button">Clear Date</button>
+                    <button id="refreshWorklist">Refresh</button>
+                </div>
+                <div id="worklistContainer" class="worklist"></div>
+                <div class="pagination" id="worklistPagination"></div>
+            </section>
+
+            <section id="early" class="tab-panel hidden">
+                <div id="earlyDraftHeader"></div>
+                <div id="earlyControls"></div>
+                <div id="earlyList"></div>
+            </section>
+
+            <section id="earlyPanel" class="patient-panel tab-panel hidden">
+                <div class="patient-toolbar">
+                    <button id="backToEarlyList">Back to Early Discharges</button>
+                    <div id="earlyHeader" class="patient-header"></div>
+                </div>
+                <div class="early-workspace">
+                    <section id="earlySummary" class="early-draft-overview"></section>
+                    <section class="early-draft-layout">
+                        <div id="earlyCurrent" class="early-add-panel"></div>
+                        <div id="earlyDraftDetails" class="early-patient-panel"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section id="patientPanel" class="patient-panel tab-panel hidden">
+                <div class="patient-toolbar">
+                    <button id="backToWorklist">Back to Worklist</button>
+                    <button id="openPatientRecord">Open Full Record</button>
+                    <div id="patientHeader" class="patient-header"></div>
+                </div>
+                <div class="patient-body">
+                    <aside class="patient-summary" id="patientSummary"></aside>
+                    <section class="patient-main">
+                        <div id="currentActivity" class="current-activity"></div>
+                        <div id="activityTimeline" class="timeline"></div>
+                        <div id="activityForm" class="activity-form"></div>
+                        <div id="dischargeAlerts" class="discharge-alerts"></div>
+                    </section>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalRoot"></div>
+
+    <script>
+    /* Patient Discharge Web Resource - single-file
+       Embedded CSS and JS for direct deployment as one HTML web resource
+    */
+    (function () {
+        'use strict';
+
+        const XrmContext = window.parent && window.parent.Xrm ? window.parent.Xrm : window.Xrm;
+
+        const CONFIG = {
+            development: { useMockData: false },
+            api: { version: 'v9.1', pageSize: 5000, dashboardPageSize: 5000 },
+            polling: { intervalMs: 2000, timeoutMs: 26000 },
+            choices: {
+                patientStatus: { pending: 408520000, inProgress: 408520001, completed: 408520002, cancelled: 749510001, missed: 749510002 },
+                activityAction: { pending: 100000000, cleared: 408520000, forwardToTeam: 2 },
+                yesNoNotDone: { yes: 1, no: 0, notDone: 2 },
+                gender: { male: 100000000, female: 100000001 }
+            },
+            tables: {
+                patient: 'crad2_patientdischarge',
+                activity: 'crad2_dischargeactivity',
+                team: 'team',
+                delayReason: 'and_delayreasons',
+                dischargeAlertCandidates: ['crda1_dischargealert', 'crad2_dischargealert', 'and_dischargealert', 'new_dischargealert'],
+                early: 'and_earlydischarge',
+                earlyIpd: 'and_earlydischarge_ipdvisits',
+                inpatient: 'and_inpatientlist'
+            },
+            fields: {
+                id: 'crad2_patientdischargeid',
+                name: 'crad2_dischargereference',
+                patientName: 'crad2_patientname',
+                patientId: 'new_patientid',
+                patientCode: 'and_patientcode',
+                patientIdLookup: '_crad2_patientidlookup_value',
+                visitId: 'crad2_visitid',
+                admissionDate: 'crad2_admissiondate',
+                age: 'new_age',
+                room: 'crad2_room',
+                bed: 'crad2_bed',
+                floor: 'crad2_floor',
+                nurseStation: 'new_nursestation',
+                physician: 'crad2_doctorname',
+                admissionDoctor: 'new_admissiondoctor',
+                specialty: 'crad2_specialty',
+                diagnosis: 'new_diagnosis',
+                paymentType: 'new_paymenttype',
+                contract: 'new_contract',
+                contractor: 'new_contractor',
+                phoneNumber: 'crad2_phonenumber',
+                status: 'crad2_status',
+                currentStep: 'crda1_currentstepf',
+                pendingOn: 'crad2_pendingon',
+                earlyFlag: 'and_earlyflag',
+                hasHomeMedications: 'and_ishomemedication',
+                homeMedicationTime: 'and_homemedicationtime',
+                homeMedicationsDate: 'and_homemedicationsdate',
+                homeMedicationsFlag: 'and_homemedicationsflag',
+                fileScanStatus: 'new_filescanstatus',
+                lastActivity: 'new_lastactivity',
+                los: 'crad2_los',
+                losDays: 'crad2_losdays',
+                outpatientClearanceDate: 'crda1_outpatientclearancedate',
+                outpatientPharmacyPending: 'new_outpatientpharmacypending',
+                physicalTAT: 'and_physicaltat',
+                physicalTATDate: 'and_physicaltat_date',
+                physicalTATState: 'and_physicaltat_state',
+                physicalDischargeTAT: 'and_physicaldischargetat',
+                physicianDischargeDateFormula: 'and_physiciandischargedate',
+                physicianDischargeDate: 'crad2_dischargedate',
+                slaCategory: 'and_slacategory',
+                cancellationReason: 'and_cancellationreason',
+                cancelled: 'and_cancelled',
+                alertFlag: 'crda1_whatsappflag',
+                smsSendDateTime: 'crda1_smssenddatetime',
+                isDelayed: 'and_isdelayed',
+                actionDate: 'crad2_actiondate',
+                gender: 'crad2_gender',
+                dischargeType: 'and_dischargetype',
+                businessUnit: '_owningbusinessunit_value',
+                createdOn: 'createdon'
+            },
+            earlyFields: {
+                id: 'and_earlydischargeid',
+                dischargeDate: 'and_dischargedate',
+                alternateDate: 'and_date',
+                status: 'and_statusnew',
+                countOfPatients: 'and_countofpatients',
+                submissionDate: 'and_submissiondate',
+                submittedBy: '_and_submittedby_value',
+                createdOn: 'createdon'
+            },
+            patientAliases: {
+                patientId: ['new_patientid', 'and_patientid', 'crad2_patientid', 'crad2_patientcode'],
+                patientCode: ['crad2_patientcode', 'new_patientcode']
+            },
+            patientFieldAliases: {
+                admissionDoctor: ['new_admissiondoctor', 'and_admissiondoctor', 'crad2_admissiondoctor', 'and_admissiondoctorname'],
+                fileScanStatus: ['new_filescanstatus', 'and_filescanstatus', 'crad2_filescanstatus']
+            },
+            inpatientFields: {
+                id: 'and_inpatientlistid',
+                name: 'and_name',
+                patientName: 'and_patientname',
+                patientId: 'new_patientid',
+                visitId: 'crda1_visitid',
+                room: 'and_room',
+                bed: 'and_bed',
+                physician: 'and_physician',
+                specialty: 'and_specialty',
+                admissionDate: 'and_admissiondate'
+            },
+            inpatientAliases: {
+                nurseStation: ['new_nursestation', 'and_nursestation', 'crad2_nursestation'],
+                admissionDoctor: ['new_admissiondoctor', 'and_admissiondoctor', 'crad2_admissiondoctor', 'and_admissiondoctorname']
+            },
+            earlyIpdFields: {
+                id: 'and_earlydischarge_ipdvisitsid',
+                name: 'and_name',
+                patientCode: 'and_patientcode',
+                patientCodeValue: '_and_patientcode_value',
+                visitId: 'crda1_visitid',
+                dischargeType: 'and_dischargetype',
+                cancellationReason: 'and_cancellationreason',
+                isSubmitted: 'and_is_submitted'
+            },
+            delayReasonFields: {
+                id: 'and_delayreasonsid',
+                idAliases: ['and_delayreasonsid', 'and_delayreasonid'],
+                name: 'and_name',
+                nameAliases: ['and_name', 'and_delayreason', 'and_reason', 'crad2_name']
+            },
+            dischargeAlertFields: {
+                idAliases: ['crda1_dischargealertid', 'crad2_dischargealertid', 'and_dischargealertid', 'new_dischargealertid'],
+                commentAliases: ['crda1_comment', 'crad2_comment', 'and_comment', 'new_comment', 'crda1_description', 'crad2_description', 'and_description', 'new_description', 'crda1_name', 'crad2_name', 'and_name'],
+                titleAliases: ['crda1_name', 'crad2_name', 'and_name', 'new_name', 'crda1_title', 'crad2_title', 'and_title', 'new_title'],
+                statusAliases: ['statuscode', 'statecode', 'crda1_status', 'crad2_status', 'and_status', 'new_status'],
+                severityAliases: ['crda1_severity', 'crad2_severity', 'and_severity', 'new_severity', 'crda1_alerttype', 'crad2_alerttype', 'and_alerttype', 'new_alerttype'],
+                patientLookupAliases: ['crda1_Patient', 'crda1_patient', 'crda1_PatientDischarge', 'crda1_patientdischarge', 'crad2_Patient', 'crad2_patient', 'crad2_PatientDischarge', 'crad2_patientdischarge', 'and_Patient', 'and_patient', 'and_PatientDischarge', 'and_patientdischarge', 'new_Patient', 'new_patient'],
+                patientValueAliases: ['_crda1_patient_value', '_crda1_patientdischarge_value', '_crad2_patient_value', '_crad2_patientdischarge_value', '_and_patient_value', '_and_patientdischarge_value', '_new_patient_value']
+            },
+            lookupBindings: {
+                activityDelayReason: ['and_DelayReason', 'and_delayreason'],
+                activityForwardTeam: ['crad2_ForwardToTeam', 'crad2_forwardtoteam', 'new_ForwardToTeam', 'new_forwardtoteam', 'and_ForwardToTeam', 'and_forwardtoteam', 'crda1_ForwardToTeam', 'crda1_forwardtoteam'],
+                earlyIpdParent: ['and_EarlyDischarge', 'and_earlydischarge'],
+                earlyIpdPatientCode: ['and_PatientCode', 'and_patientcode'],
+                earlyIpdPatientDischarge: ['and_PatientDischarge', 'and_patientdischarge']
+            },
+            subjectAliases: {
+                requestInitiation: 'request initiation',
+                homeMedications: 'home medications preparation',
+                medicationsReturn: 'medications return',
+                financialDischarge: 'financial discharge',
+                physicalDischarge: 'physical discharge',
+                roomCleaning: 'room cleaning'
+            }
+        };
+
+        const CHOICE_MAPS = {
+            patientDischargeStatus: { 408520000: 'Pending', 408520001: 'In Progress', 408520002: 'Completed', 749510001: 'Cancelled', 749510002: 'Missed' },
+            pendingOn: { 408520000: 'Nursing', 408520001: 'Pharmacy & Billing', 408520002: 'Front Office', 408520003: 'Nursing (Physical Discharge)', 408520004: 'House Keeping' },
+            gender: { 100000000: 'Male', 100000001: 'Female' },
+            earlyDischargeFlag: { 1: 'Yes', 0: 'No', true: 'Yes', false: 'No' },
+            earlyDischargeStatus: { 0: 'Draft', 1: 'Submitted' },
+            dischargeType: { 1: 'Early', 2: 'Planned' },
+            activityAction: { 100000000: 'Pending', 408520000: 'Cleared', 2: 'Forward To Team' },
+            billingAction: { 1: 'Cleared', 2: 'Forward To Team' },
+            billingStatus: { 408520000: 'Cleared', 408520001: 'Not Cleared' },
+            pharmacyStatus: { 408520000: 'Cleared', 408520001: 'Not Cleared' },
+            physicalDischargeQuestion: { 1: 'Yes', 0: 'No', 2: 'Not Done' },
+            yesNo12: { 1: 'Yes', 2: 'No' },
+            stage: { 100000000: 'Nursing Physical Discharge', 408520000: 'Nursing', 408520001: 'Inpatient Pharmacy', 408520002: 'Outpatient Pharmacy', 408520003: 'Billing' }
+        };
+
+        const FIELD_CHOICE_MAPS = {
+            'crad2_patientdischarge.crad2_status': 'patientDischargeStatus',
+            'crad2_patientdischarge.crad2_pendingon': 'pendingOn',
+            'crad2_patientdischarge.crad2_gender': 'gender',
+            'crad2_patientdischarge.and_earlyflag': 'earlyDischargeFlag',
+            'crad2_patientdischarge.and_dischargetype': 'dischargeType',
+            'crad2_dischargeactivity.crad2_status': 'activityAction',
+            'crad2_dischargeactivity.crad2_statge': 'stage',
+            'crad2_dischargeactivity.new_billingaction': 'billingAction',
+            'crad2_dischargeactivity.crad2_billingstatus': 'billingStatus',
+            'crad2_dischargeactivity.crad2_pharmacystatus': 'pharmacyStatus',
+            'crad2_dischargeactivity.and_didyoureceivethedischargesummary': 'physicalDischargeQuestion',
+            'crad2_dischargeactivity.and_didyoureceiveyourhomemedications': 'physicalDischargeQuestion',
+            'crad2_dischargeactivity.and_doyouhaveafollowupappointment': 'physicalDischargeQuestion',
+            'crad2_dischargeactivity.new_dischargeinstructions': 'yesNo12',
+            'crad2_dischargeactivity.new_dischargeinstructionsss': 'yesNo12',
+            'crad2_dischargeactivity.new_pharmacyreturn': 'yesNo12',
+            'crad2_dischargeactivity.crad2_pharmacyreturn': 'yesNo12',
+            'crad2_dischargeactivity.new_homemedications': 'yesNo12',
+            'crad2_dischargeactivity.crad2_homemedications': 'yesNo12',
+            'and_earlydischarge.and_statusnew': 'earlyDischargeStatus',
+            'and_earlydischarge_ipdvisits.and_dischargetype': 'dischargeType',
+            'and_earlydischarge_ipdvisits.and_earlyflag': 'earlyDischargeFlag'
+        };
+
+        function normalizeGuid(id) { return id ? id.replace(/[{}]/g, '') : null; }
+        function toQueryString(params) { return Object.entries(params).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&'); }
+        function safeGet(obj, path, def = null) { try { const value = path.split('.').reduce((s, p) => (s === null || s === undefined) ? undefined : s[p], obj); return value === null || value === undefined ? def : value; } catch (e) { return def; } }
+        function normalizeSubject(subject) { if (!subject) return ''; return subject.replace(/[\p{Emoji_Presentation}\p{Emoji}\u{1F300}-\u{1F6FF}]/gu, '').replace(/[^a-zA-Z0-9 ]/g, '').trim().toLowerCase(); }
+        function isBlank(value) { return value === null || value === undefined || value === ''; }
+        function fallbackChoiceLabel(mapKey, value) { if (!mapKey || value === null || value === undefined) return null; const map = CHOICE_MAPS[mapKey]; return map ? map[value] ?? map[String(value)] ?? null : null; }
+        function displayValue(record, field, mapKey, empty = '-') { const formatted = record ? record[`${field}@OData.Community.Display.V1.FormattedValue`] : null; if (!isBlank(formatted)) return formatted; const raw = record ? record[field] : null; const mapped = fallbackChoiceLabel(mapKey, raw); if (!isBlank(mapped)) return mapped; return isBlank(raw) ? empty : String(raw); }
+        function displayChoice(record, entityLogicalName, field, empty = '-') { return displayValue(record, field, FIELD_CHOICE_MAPS[`${entityLogicalName}.${field}`], empty); }
+        function choiceEquals(value, expected) { return String(value) === String(expected); }
+        function isTruthyChoice(value) {
+            if (value === true) return true;
+            if (value === false || value === null || value === undefined) return false;
+            const text = String(value).trim().toLowerCase();
+            return ['1', 'true', 'yes', 'y', 'delayed'].includes(text);
+        }
+        function displayDateTime(record, field, empty = '-') {
+            const formatted = record ? record[`${field}@OData.Community.Display.V1.FormattedValue`] : null;
+            if (!isBlank(formatted)) return formatted;
+            const raw = record ? record[field] : null;
+            if (isBlank(raw)) return empty;
+            const date = new Date(raw);
+            if (Number.isNaN(date.getTime())) return String(raw);
+            return date.toLocaleString();
+        }
+        function firstDisplayValue(record, fields, empty = '-') {
+            for (const field of fields) {
+                const value = displayValue(record, field, null, '');
+                if (!isBlank(value)) return value;
+            }
+            return empty;
+        }
+        function firstRawValue(record, fields, empty = '') {
+            for (const field of fields) {
+                const raw = record ? record[field] : null;
+                if (!isBlank(raw)) return raw;
+            }
+            return empty;
+        }
+        function firstDisplayChoice(record, entityLogicalName, fields, empty = '-') {
+            for (const field of fields) {
+                const value = displayChoice(record, entityLogicalName, field, '');
+                if (!isBlank(value)) return value;
+            }
+            return empty;
+        }
+        function firstDisplayDateTime(record, fields, empty = '-') {
+            for (const field of fields) {
+                const value = displayDateTime(record, field, '');
+                if (!isBlank(value)) return value;
+            }
+            return empty;
+        }
+        function getLocalizedLabel(labelObject) {
+            const labels = safeGet(labelObject || {}, 'LocalizedLabels', []);
+            if (Array.isArray(labels) && labels.length) return labels[0].Label || '';
+            return safeGet(labelObject || {}, 'UserLocalizedLabel.Label', '') || '';
+        }
+        function todayCreatedOnFilter() {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            return { from: start.toISOString(), to: end.toISOString() };
+        }
+
+        function escapeHtml(str) { if (str === null || str === undefined) return ''; return String(str).replace(/[&<>"'`]/g, function (s) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' })[s]; }); }
+        function escapeCssValue(value) { return window.CSS && CSS.escape ? CSS.escape(String(value || '')) : String(value || '').replace(/["\\]/g, '\\$&'); }
+
+        function openModelDrivenForm(entityName, entityId) {
+            const id = normalizeGuid(entityId);
+            if (!id) {
+                showAppMessage('Record unavailable', 'This record does not have a valid Dataverse id yet.', 'error');
+                return;
+            }
+            if (XrmContext && XrmContext.Navigation && XrmContext.Navigation.openForm) {
+                XrmContext.Navigation.openForm({ entityName, entityId: id }).catch(err => {
+                    console.error('openForm failed', err);
+                    showAppMessage('Unable to open record', 'The Model-Driven form could not be opened from this context.', 'error');
+                });
+                return;
+            }
+            showAppMessage('Dynamics context unavailable', 'Open this web resource inside Dynamics to launch the Model-Driven form.', 'error');
+        }
+
+        async function openDischargeAlertModelDrivenForm({ quickCreate = true } = {}) {
+            if (!State.selectedPatient) return;
+            const patientId = normalizeGuid(State.selectedPatient[CONFIG.fields.id]);
+            const patient = getPatientDisplayData(State.selectedPatient);
+            try {
+                const schema = await DataverseService.resolveDischargeAlertSchema();
+                if (!XrmContext || !XrmContext.Navigation || !XrmContext.Navigation.openForm) {
+                    showAppMessage('Dynamics context unavailable', 'Open this web resource inside Dynamics to launch the Discharge Alert form.', 'error');
+                    return;
+                }
+                const formOptions = {
+                    entityName: schema.logicalName,
+                    useQuickCreateForm: !!quickCreate,
+                    createFromEntity: {
+                        entityType: CONFIG.tables.patient,
+                        id: patientId,
+                        name: patient.patientName || patient.reference || 'Patient Discharge'
+                    }
+                };
+                await XrmContext.Navigation.openForm(formOptions);
+                await loadDischargeAlerts(patientId);
+            } catch (err) {
+                if (quickCreate) {
+                    console.warn('Discharge Alert quick create failed, trying normal create form', err);
+                    await openDischargeAlertModelDrivenForm({ quickCreate: false });
+                    return;
+                }
+                console.error('Unable to open Discharge Alert form', err);
+                showAppMessage('Unable to open alert form', 'The existing Discharge Alert form could not be opened from this context.', 'error');
+            }
+        }
+
+        function workflowSignal(snapshot, targetActivityId) {
+            if (!snapshot) return '';
+            const targetId = normalizeGuid(targetActivityId);
+            const parent = snapshot.parent || {};
+            const parentParts = [
+                parent[CONFIG.fields.status],
+                parent[CONFIG.fields.currentStep],
+                parent[CONFIG.fields.pendingOn],
+                safeGet(parent, '_ownerid_value@OData.Community.Display.V1.FormattedValue', '') || safeGet(parent, 'ownerid@OData.Community.Display.V1.FormattedValue', ''),
+                safeGet(parent, '_ownerid_value', ''),
+                parent.modifiedon
+            ];
+            const activities = (snapshot.activities || []).map(a => {
+                const activityId = normalizeGuid(a.crad2_dischargeactivityid);
+                return [
+                    activityId,
+                    activityId === targetId ? 'target' : a.crad2_status,
+                    activityId === targetId ? '' : a.crad2_actiondate,
+                    activityId === targetId ? '' : safeGet(a, '_crad2_forwardtoteam_value', '') || a.crad2_forwardtoteam,
+                    activityId === targetId ? '' : safeGet(a, '_ownerid_value', ''),
+                    a.crad2_subject,
+                    a.crad2_statge
+                ].join(':');
+            }).sort();
+            return JSON.stringify({ parent: parentParts, activities });
+        }
+
+        const DataverseService = {
+            _entitySetCache: {},
+            getClientUrl() { try { if (XrmContext && XrmContext.Utility && XrmContext.Utility.getGlobalContext) { return XrmContext.Utility.getGlobalContext().getClientUrl(); } } catch (e) { } const loc = window.location; return `${loc.protocol}//${loc.host}`; },
+
+            async fetchJson(url, options = {}) {
+                const opts = Object.assign({ headers: { 'Accept': 'application/json' } }, options);
+                if (!opts.headers['OData-MaxVersion']) opts.headers['OData-MaxVersion'] = '4.0';
+                if (!opts.headers['OData-Version']) opts.headers['OData-Version'] = '4.0';
+                if (!opts.headers['Prefer']) opts.headers['Prefer'] = 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"';
+                if (!opts.headers['Content-Type'] && options.body) opts.headers['Content-Type'] = 'application/json; charset=utf-8';
+                try {
+                    console.debug('Dataverse fetch', opts.method || 'GET', url, opts);
+                    const res = await fetch(url, opts);
+                    // capture text for diagnostics (clone so body still readable)
+                    const txt = await res.clone().text().catch(() => null);
+                    if (!res.ok) {
+                        console.error('Dataverse response error', res.status, url, txt);
+                        const err = new Error(`HTTP ${res.status}`);
+                        err.status = res.status;
+                        err.body = txt;
+                        throw err;
+                    }
+                    const errEl = document.getElementById('dataverseError');
+                    if (errEl) errEl.innerHTML = '';
+                    if (res.status === 204) return null;
+                    const contentType = res.headers.get('content-type') || '';
+                    if (contentType.indexOf('application/json') !== -1) {
+                        try { return await res.json(); } catch (e) { console.warn('JSON parse failed for', url, e, txt); throw e; }
+                    }
+                    return res;
+                } catch (err) {
+                    console.error('Fetch error', url, err);
+                    try {
+                        window.__lastDataverseError = { url, method: opts.method || 'GET', status: err.status || null, body: err.body || (err.message || '').toString() };
+                        const el = document.getElementById('dataverseError');
+                        if (el) {
+                            el.innerHTML = `<div class="status-badge status-danger">Dataverse ${window.__lastDataverseError.status || 'Error'}</div><div style="margin-top:6px"><button id="copyLastError" class="small">Copy diagnostics</button></div>`;
+                            const btn = document.getElementById('copyLastError');
+                            if (btn) btn.addEventListener('click', () => {
+                                const payload = `URL: ${window.__lastDataverseError.url}\nMETHOD: ${window.__lastDataverseError.method}\nSTATUS: ${window.__lastDataverseError.status}\nRESPONSE:\n${window.__lastDataverseError.body}`;
+                                try { navigator.clipboard.writeText(payload); btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy diagnostics', 2000); } catch (e) { showAppMessage('Diagnostics unavailable', 'Unable to copy diagnostics in this browser context.', 'error'); }
+                            });
+                        }
+                    } catch (ex) { console.warn('Failed to render dataverse error UI', ex); }
+                    throw err;
+                }
+            },
+
+            async getEntitySetName(logicalName) {
+                if (!logicalName) return logicalName;
+                if (this._entitySetCache[logicalName]) return this._entitySetCache[logicalName];
+                try {
+                    const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/EntityDefinitions(LogicalName='${logicalName}')?$select=EntitySetName`;
+                    const r = await this.fetchJson(url);
+                    const set = r && r.EntitySetName ? r.EntitySetName : logicalName;
+                    this._entitySetCache[logicalName] = set;
+                    return set;
+                } catch (e) {
+                    // fallback: naive pluralization
+                    const fallback = logicalName.endsWith('s') ? logicalName : logicalName + 's';
+                    this._entitySetCache[logicalName] = fallback;
+                    return fallback;
+                }
+            },
+
+            // Fetch and cache attribute logical names for an entity
+            async getEntityAttributes(logicalName) {
+                if (!logicalName) return [];
+                this._attrCache = this._attrCache || {};
+                if (this._attrCache[logicalName]) return this._attrCache[logicalName];
+                try {
+                    const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/EntityDefinitions(LogicalName='${logicalName}')/Attributes?$select=LogicalName&$top=5000`;
+                    const r = await this.fetchJson(url);
+                    const items = (r && r.value) ? r.value.map(a => a.LogicalName) : [];
+                    this._attrCache[logicalName] = new Set(items);
+                    return this._attrCache[logicalName];
+                } catch (e) {
+                    if (e.status !== 404) console.warn('Unable to fetch attributes for', logicalName, e);
+                    this._attrCache[logicalName] = new Set();
+                    return this._attrCache[logicalName];
+                }
+            },
+
+            async getEntityAttributeTypes(logicalName) {
+                this._attrTypeCache = this._attrTypeCache || {};
+                if (this._attrTypeCache[logicalName]) return this._attrTypeCache[logicalName];
+                try {
+                    const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/EntityDefinitions(LogicalName='${logicalName}')/Attributes?$select=LogicalName,AttributeType&$top=5000`;
+                    const r = await this.fetchJson(url);
+                    const types = {};
+                    safeGet(r, 'value', []).forEach(attr => { types[attr.LogicalName] = attr.AttributeType; });
+                    this._attrTypeCache[logicalName] = types;
+                    return types;
+                } catch (e) {
+                    console.warn('Unable to fetch attribute types for', logicalName, e);
+                    this._attrTypeCache[logicalName] = {};
+                    return this._attrTypeCache[logicalName];
+                }
+            },
+
+            async searchEntityDefinitions(term) {
+                try {
+                    const safeTerm = String(term || '').toLowerCase();
+                    return (await this.getEntityDefinitions()).filter(entity =>
+                        !safeTerm || String(entity.LogicalName || '').toLowerCase().includes(safeTerm) || String(getLocalizedLabel(entity.DisplayName) || '').toLowerCase().includes(safeTerm)
+                    );
+                } catch (e) {
+                    console.warn('Unable to search entity definitions for', term, e);
+                    return [];
+                }
+            },
+
+            async getEntityDefinitions() {
+                if (this._entityDefinitions) return this._entityDefinitions;
+                try {
+                    const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/EntityDefinitions?$select=LogicalName,EntitySetName,PrimaryIdAttribute,PrimaryNameAttribute,DisplayName&$top=5000`;
+                    const r = await this.fetchJson(url);
+                    this._entityDefinitions = safeGet(r, 'value', []);
+                    return this._entityDefinitions;
+                } catch (e) {
+                    console.warn('Unable to load entity definitions', e);
+                    this._entityDefinitions = [];
+                    return this._entityDefinitions;
+                }
+            },
+
+            async getOneToManyRelationships(logicalName) {
+                this._oneToManyCache = this._oneToManyCache || {};
+                if (this._oneToManyCache[logicalName]) return this._oneToManyCache[logicalName];
+                try {
+                    const select = '$select=SchemaName,ReferencedEntity,ReferencedAttribute,ReferencingEntity,ReferencingAttribute';
+                    const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/EntityDefinitions(LogicalName='${logicalName}')/OneToManyRelationships?${select}&$top=5000`;
+                    const r = await this.fetchJson(url);
+                    this._oneToManyCache[logicalName] = safeGet(r, 'value', []);
+                    return this._oneToManyCache[logicalName];
+                } catch (e) {
+                    console.warn('Unable to fetch one-to-many relationships for', logicalName, e);
+                    this._oneToManyCache[logicalName] = [];
+                    return this._oneToManyCache[logicalName];
+                }
+            },
+
+            async getAttributeMetadata(logicalName) {
+                this._attributeMetadataCache = this._attributeMetadataCache || {};
+                if (this._attributeMetadataCache[logicalName]) return this._attributeMetadataCache[logicalName];
+                try {
+                    const select = '$select=LogicalName,SchemaName,AttributeType,RequiredLevel,DisplayName';
+                    const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/EntityDefinitions(LogicalName='${logicalName}')/Attributes?${select}&$top=5000`;
+                    const r = await this.fetchJson(url);
+                    this._attributeMetadataCache[logicalName] = safeGet(r, 'value', []);
+                    return this._attributeMetadataCache[logicalName];
+                } catch (e) {
+                    console.warn('Unable to fetch full attribute metadata for', logicalName, e);
+                    this._attributeMetadataCache[logicalName] = [];
+                    return this._attributeMetadataCache[logicalName];
+                }
+            },
+
+            async getLookupAttributes(logicalName) {
+                this._lookupAttrCache = this._lookupAttrCache || {};
+                if (this._lookupAttrCache[logicalName]) return this._lookupAttrCache[logicalName];
+                try {
+                    const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/EntityDefinitions(LogicalName='${logicalName}')/Attributes/Microsoft.Dynamics.CRM.LookupAttributeMetadata?$select=LogicalName,SchemaName,Targets&$top=5000`;
+                    const r = await this.fetchJson(url);
+                    this._lookupAttrCache[logicalName] = safeGet(r, 'value', []);
+                    return this._lookupAttrCache[logicalName];
+                } catch (e) {
+                    console.warn('Unable to fetch lookup attributes for', logicalName, e);
+                    this._lookupAttrCache[logicalName] = [];
+                    return this._lookupAttrCache[logicalName];
+                }
+            },
+
+            // Given desired attribute list, return only those that exist on the target entity
+            async filterValidAttributes(entityLogicalName, attrs) {
+                if (!attrs || !attrs.length) return [];
+                try {
+                    const set = await this.getEntityAttributes(entityLogicalName);
+                    if (!set || set.size === 0) {
+                        // If metadata unavailable, attempt a best-effort sanitize (remove suspicious prefixes)
+                        return attrs.filter(a => typeof a === 'string' && /^[a-z0-9_]+$/i.test(a));
+                    }
+                    return attrs.filter(a => set.has(a) || /^_.+_value$/i.test(a));
+                } catch (e) {
+                    console.warn('filterValidAttributes failed', e);
+                    return attrs.filter(a => typeof a === 'string' && /^[a-z0-9_]+$/i.test(a));
+                }
+            },
+
+            buildUrl(entitySet, query) { const base = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}`; if (!query) return base; return `${base}?${query}`; },
+
+            parseMissingProperty(err) {
+                const body = (err && err.body) || '';
+                const match = body.match(/property named '([^']+)'/i) || body.match(/property '([^']+)'/i);
+                return match ? match[1] : null;
+            },
+
+            parsePayloadProperty(err) {
+                const body = (err && err.body) || '';
+                const match = body.match(/propertyName[\\'":\s]+([a-z0-9_]+)/i) || body.match(/property '([^']+)'/i) || body.match(/property named '([^']+)'/i);
+                return match ? match[1] : null;
+            },
+
+            async fetchCollectionWithRetry(entitySet, q, options = {}) {
+                const query = Object.assign({}, q);
+                const allowDropFilter = !!options.allowDropFilter;
+                const fetchAllPages = options.fetchAllPages !== false;
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    try {
+                        const all = [];
+                        let nextUrl = this.buildUrl(entitySet, toQueryString(query));
+                        while (nextUrl) {
+                            const page = await this.fetchJson(nextUrl);
+                            all.push(...safeGet(page, 'value', []));
+                            if (!fetchAllPages) return { value: all, nextLink: page && (page['@odata.nextLink'] || page.nextLink) };
+                            nextUrl = page && (page['@odata.nextLink'] || page.nextLink) ? (page['@odata.nextLink'] || page.nextLink) : null;
+                        }
+                        return { value: all };
+                    } catch (err) {
+                        const missing = this.parseMissingProperty(err);
+                        if (!missing) throw err;
+                        let changed = false;
+                        if (query.$select) {
+                            const nextSelect = query.$select.split(',').filter(field => field !== missing);
+                            changed = nextSelect.length !== query.$select.split(',').length;
+                            if (nextSelect.length) query.$select = nextSelect.join(',');
+                            else delete query.$select;
+                        }
+                        if (query.$filter && query.$filter.includes(missing) && allowDropFilter) {
+                            delete query.$filter;
+                            changed = true;
+                        }
+                        if (query.$orderby && query.$orderby.includes(missing)) {
+                            delete query.$orderby;
+                            changed = true;
+                        }
+                        if (!changed) throw err;
+                        console.warn('Retrying Dataverse query without missing property', missing);
+                    }
+                }
+                throw new Error('Dataverse query failed after removing invalid properties');
+            },
+
+            async fetchRecordWithRetry(entitySet, id, q = {}) {
+                const query = Object.assign({}, q);
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    const qs = Object.keys(query).length ? `?${toQueryString(query)}` : '';
+                    try {
+                        return await this.fetchJson(`${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}(${id})${qs}`);
+                    } catch (err) {
+                        const missing = this.parseMissingProperty(err);
+                        if (!missing || !query.$select) throw err;
+                        const current = query.$select.split(',');
+                        const nextSelect = current.filter(field => field !== missing);
+                        if (nextSelect.length === current.length) throw err;
+                        if (nextSelect.length) query.$select = nextSelect.join(',');
+                        else delete query.$select;
+                        console.warn('Retrying Dataverse record query without missing property', missing);
+                    }
+                }
+                throw new Error('Dataverse record query failed after removing invalid properties');
+            },
+
+            async getDischargePatients({ top = CONFIG.api.pageSize, skip = 0, search = '', filters = {} } = {}) {
+                const desired = [CONFIG.fields.id, CONFIG.fields.name, CONFIG.fields.patientName, ...CONFIG.patientAliases.patientId, ...CONFIG.patientAliases.patientCode, CONFIG.fields.visitId, CONFIG.fields.room, CONFIG.fields.bed, CONFIG.fields.floor, CONFIG.fields.nurseStation, CONFIG.fields.physician, ...CONFIG.patientFieldAliases.admissionDoctor, CONFIG.fields.specialty, CONFIG.fields.age, CONFIG.fields.diagnosis, CONFIG.fields.paymentType, CONFIG.fields.contract, CONFIG.fields.contractor, CONFIG.fields.phoneNumber, CONFIG.fields.status, CONFIG.fields.currentStep, CONFIG.fields.pendingOn, CONFIG.fields.admissionDate, CONFIG.fields.earlyFlag, CONFIG.fields.hasHomeMedications, CONFIG.fields.homeMedicationTime, CONFIG.fields.homeMedicationsDate, CONFIG.fields.homeMedicationsFlag, ...CONFIG.patientFieldAliases.fileScanStatus, CONFIG.fields.lastActivity, CONFIG.fields.los, CONFIG.fields.losDays, CONFIG.fields.outpatientClearanceDate, CONFIG.fields.outpatientPharmacyPending, CONFIG.fields.physicalTAT, CONFIG.fields.physicalTATDate, CONFIG.fields.physicalTATState, CONFIG.fields.physicalDischargeTAT, CONFIG.fields.physicianDischargeDateFormula, CONFIG.fields.physicianDischargeDate, CONFIG.fields.slaCategory, CONFIG.fields.cancellationReason, CONFIG.fields.cancelled, CONFIG.fields.alertFlag, CONFIG.fields.smsSendDateTime, CONFIG.fields.isDelayed, CONFIG.fields.gender, CONFIG.fields.dischargeType, CONFIG.fields.businessUnit, CONFIG.fields.createdOn, 'modifiedon'];
+                const entityLogical = CONFIG.tables.patient;
+                const validAttrs = await this.filterValidAttributes(entityLogical, desired);
+                const q = { $top: top };
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                if (skip) q.$skip = skip;
+                const searchFilters = [];
+                if (search) {
+                    const s = search.replace("'", "''");
+                    const searchable = [CONFIG.fields.patientName, ...CONFIG.patientAliases.patientId, ...CONFIG.patientAliases.patientCode, CONFIG.fields.visitId].filter(f => !f.startsWith('_') && (!validAttrs.length || validAttrs.includes(f)));
+                    if (searchable.length) searchFilters.push(searchable.map(f => `contains(${f},'${s}')`).join(' or '));
+                }
+                if (filters.status && (!validAttrs.length || validAttrs.includes(CONFIG.fields.status))) searchFilters.push(`${CONFIG.fields.status} eq ${filters.status}`);
+                if (filters.pendingOn && (!validAttrs.length || validAttrs.includes(CONFIG.fields.pendingOn))) searchFilters.push(`${CONFIG.fields.pendingOn} eq ${filters.pendingOn}`);
+                if (filters.earlyFlag !== undefined && (!validAttrs.length || validAttrs.includes(CONFIG.fields.earlyFlag))) searchFilters.push(`${CONFIG.fields.earlyFlag} eq ${filters.earlyFlag}`);
+                if (filters.createdOnFrom && (!validAttrs.length || validAttrs.includes(CONFIG.fields.createdOn))) searchFilters.push(`${CONFIG.fields.createdOn} ge ${filters.createdOnFrom}`);
+                if (filters.createdOnTo && (!validAttrs.length || validAttrs.includes(CONFIG.fields.createdOn))) searchFilters.push(`${CONFIG.fields.createdOn} lt ${filters.createdOnTo}`);
+                if (searchFilters.length) q.$filter = searchFilters.join(' and ');
+                if (!validAttrs.length || validAttrs.includes(CONFIG.fields.lastActivity)) q.$orderby = `${CONFIG.fields.lastActivity} desc`;
+                else if (validAttrs.includes('modifiedon')) q.$orderby = 'modifiedon desc';
+                else if (validAttrs.includes(CONFIG.fields.createdOn)) q.$orderby = `${CONFIG.fields.createdOn} desc`;
+                const entitySet = await this.getEntitySetName(CONFIG.tables.patient);
+                console.debug('getDischargePatients ->', { entityLogical, entitySet, $select: q.$select, $filter: q.$filter });
+                return await this.fetchCollectionWithRetry(entitySet, q, { allowDropFilter: true, fetchAllPages: filters.fetchAllPages !== false });
+            },
+
+            async getPatientDischarge(id) {
+                const nid = normalizeGuid(id);
+                const desired = [CONFIG.fields.id, CONFIG.fields.name, CONFIG.fields.patientName, ...CONFIG.patientAliases.patientId, ...CONFIG.patientAliases.patientCode, CONFIG.fields.visitId, CONFIG.fields.room, CONFIG.fields.bed, CONFIG.fields.floor, CONFIG.fields.nurseStation, CONFIG.fields.physician, ...CONFIG.patientFieldAliases.admissionDoctor, CONFIG.fields.specialty, CONFIG.fields.age, CONFIG.fields.diagnosis, CONFIG.fields.paymentType, CONFIG.fields.contract, CONFIG.fields.contractor, CONFIG.fields.phoneNumber, CONFIG.fields.status, CONFIG.fields.currentStep, CONFIG.fields.pendingOn, CONFIG.fields.admissionDate, CONFIG.fields.earlyFlag, CONFIG.fields.hasHomeMedications, CONFIG.fields.homeMedicationTime, CONFIG.fields.homeMedicationsDate, CONFIG.fields.homeMedicationsFlag, ...CONFIG.patientFieldAliases.fileScanStatus, CONFIG.fields.lastActivity, CONFIG.fields.los, CONFIG.fields.losDays, CONFIG.fields.outpatientClearanceDate, CONFIG.fields.outpatientPharmacyPending, CONFIG.fields.physicalTAT, CONFIG.fields.physicalTATDate, CONFIG.fields.physicalTATState, CONFIG.fields.physicalDischargeTAT, CONFIG.fields.physicianDischargeDateFormula, CONFIG.fields.physicianDischargeDate, CONFIG.fields.slaCategory, CONFIG.fields.cancellationReason, CONFIG.fields.cancelled, CONFIG.fields.alertFlag, CONFIG.fields.smsSendDateTime, CONFIG.fields.isDelayed, CONFIG.fields.gender, CONFIG.fields.dischargeType, CONFIG.fields.businessUnit, CONFIG.fields.createdOn, 'modifiedon', '_ownerid_value', 'statecode', 'statuscode'];
+                const entityLogical = CONFIG.tables.patient;
+                const validAttrs = await this.filterValidAttributes(entityLogical, desired);
+                const entitySet = await this.getEntitySetName(CONFIG.tables.patient);
+                const q = {};
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                return await this.fetchRecordWithRetry(entitySet, nid, q);
+            },
+
+            async getActivities(dischargeId) {
+                const id = normalizeGuid(dischargeId);
+                const desired = ['crad2_dischargeactivityid', 'crad2_subject', 'crad2_statge', 'crad2_status', 'and_startdate', 'crad2_actiondate', 'crda1_pendingdate', '_crad2_previousactivity_value', '_ownerid_value', 'new_comment', 'new_attachment', 'and_isdelayed', '_and_delayreason_value', 'and_tat', 'and_activityclearancetatmins', 'crad2_wasforwarded', '_crad2_forwardtoteam_value', 'and_teamlookup', 'new_forwardtoteam', 'crda1_forwardtoteamdate', 'and_modifiedby', 'crad2_escalation', 'new_billingaction', 'crad2_billingcomment', 'crad2_billingstatus', 'crad2_completechargingitems', 'crda1_hidefinancialdischarge', 'new_homemedications', 'crad2_homemedications', 'crad2_pharmacycomments', 'new_pharmacyreturn', 'crad2_pharmacyreturn', 'crad2_pharmacystatus', 'new_dischargeinstructionsss', 'new_dischargeinstructions', 'new_followupdate', 'and_didyoureceivethedischargesummary', 'and_didyoureceiveyourhomemedications', 'and_doyouhaveafollowupappointment', 'modifiedon', 'statecode', 'statuscode'];
+                const entityLogical = CONFIG.tables.activity;
+                const validAttrs = await this.filterValidAttributes(entityLogical, desired);
+                const filter = `_crad2_discharge_value eq ${id}`;
+                const entitySet = await this.getEntitySetName(CONFIG.tables.activity);
+                console.debug('getActivities ->', { entityLogical: CONFIG.tables.activity, entitySet, $select: validAttrs.join(','), $filter: filter });
+                const q = { $filter: filter };
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                if (validAttrs.includes('and_startdate')) q.$orderby = 'and_startdate asc';
+                return await this.fetchCollectionWithRetry(entitySet, q);
+            },
+
+            async updateActivity(id, payload) {
+                const nid = normalizeGuid(id);
+                const entitySet = await this.getEntitySetName(CONFIG.tables.activity);
+                const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}(${nid})`;
+                let nextPayload = Object.assign({}, payload);
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    try {
+                        await this.fetchJson(url, { method: 'PATCH', body: JSON.stringify(nextPayload) });
+                        return true;
+                    } catch (err) {
+                        const missing = this.parseMissingProperty(err);
+                        const payloadProperty = this.parsePayloadProperty(err);
+                        const badKey = missing ? Object.keys(nextPayload).find(key => key === missing || key.toLowerCase() === missing.toLowerCase() || key.toLowerCase().indexOf(`${missing.toLowerCase()}@`) === 0) : (payloadProperty ? Object.keys(nextPayload).find(key => key.toLowerCase() === payloadProperty.toLowerCase()) : null);
+                        if (!badKey) throw err;
+                        delete nextPayload[badKey];
+                        console.warn('Retrying activity update without rejected property', missing || payloadProperty);
+                    }
+                }
+                throw new Error('Activity update failed after removing invalid properties');
+            },
+
+            async updateActivityWithLookups(id, payload, lookups = {}) {
+                const delayReasonId = normalizeGuid(lookups.delayReasonId);
+                if (!delayReasonId) return await this.updateActivity(id, payload);
+                const nid = normalizeGuid(id);
+                const entitySet = await this.getEntitySetName(CONFIG.tables.activity);
+                const delayReasonEntitySet = await this.getEntitySetName(CONFIG.tables.delayReason);
+                const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}(${nid})`;
+                let lastError = null;
+                for (const delayReasonLookup of CONFIG.lookupBindings.activityDelayReason) {
+                    let nextPayload = Object.assign({}, payload, {
+                        [`${delayReasonLookup}@odata.bind`]: `/${delayReasonEntitySet}(${delayReasonId})`
+                    });
+                    for (let attempt = 0; attempt < 8; attempt++) {
+                        try {
+                            await this.fetchJson(url, { method: 'PATCH', body: JSON.stringify(nextPayload) });
+                            return true;
+                        } catch (err) {
+                            lastError = err;
+                            const missing = this.parseMissingProperty(err);
+                            const payloadProperty = this.parsePayloadProperty(err);
+                            const badKey = missing ? Object.keys(nextPayload).find(key => key === missing || key.toLowerCase() === missing.toLowerCase() || key.toLowerCase().indexOf(`${missing.toLowerCase()}@`) === 0) : (payloadProperty ? Object.keys(nextPayload).find(key => key.toLowerCase() === payloadProperty.toLowerCase()) : null);
+                            if (!badKey) throw err;
+                            if (badKey.indexOf('@odata.bind') !== -1 && badKey.toLowerCase().includes('delayreason')) break;
+                            delete nextPayload[badKey];
+                            console.warn('Retrying activity update without rejected property', missing || payloadProperty);
+                        }
+                    }
+                }
+                throw lastError || new Error('Activity update failed with delay reason lookup');
+            },
+
+            async resolveActivityTeamBinding() {
+                if (this._activityTeamBinding) return this._activityTeamBinding;
+                const lookupAttrs = await this.getLookupAttributes(CONFIG.tables.activity);
+                const candidates = CONFIG.lookupBindings.activityForwardTeam || [];
+                const teamLookup = lookupAttrs.find(attr => candidates.some(name => [attr.SchemaName, attr.LogicalName].filter(Boolean).some(value => value.toLowerCase() === name.toLowerCase())) && (attr.Targets || []).includes(CONFIG.tables.team)) ||
+                    lookupAttrs.find(attr => String(attr.LogicalName || '').toLowerCase().includes('forward') && (attr.Targets || []).includes(CONFIG.tables.team)) ||
+                    lookupAttrs.find(attr => (attr.Targets || []).includes(CONFIG.tables.team));
+                if (teamLookup) {
+                    this._activityTeamBinding = teamLookup.SchemaName || teamLookup.LogicalName;
+                    return this._activityTeamBinding;
+                }
+                this._activityTeamBinding = candidates[0] || 'crad2_ForwardToTeam';
+                return this._activityTeamBinding;
+            },
+
+            async searchTeams(qtext) { const q = { $select: 'teamid,name', $top: 20 }; if (qtext) q.$filter = `contains(name,'${encodeURIComponent(qtext.replace("'","''"))}')`; const url = this.buildUrl('teams', toQueryString(q)); return await this.fetchJson(url); },
+
+            async searchDelayReasons(qtext) {
+                const f = CONFIG.delayReasonFields;
+                const idFields = f.idAliases || [f.id];
+                const nameFields = f.nameAliases || [f.name];
+                const desired = [...idFields, ...nameFields];
+                const validAttrs = await this.filterValidAttributes(CONFIG.tables.delayReason, desired);
+                const q = { $top: 20 };
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                const searchableName = nameFields.find(field => !validAttrs.length || validAttrs.includes(field));
+                if (qtext && searchableName) {
+                    const s = qtext.replace(/'/g, "''");
+                    q.$filter = `contains(${searchableName},'${s}')`;
+                }
+                const entitySet = await this.getEntitySetName(CONFIG.tables.delayReason);
+                return await this.fetchCollectionWithRetry(entitySet, q, { allowDropFilter: true, fetchAllPages: false });
+            },
+
+            async resolveDischargeAlertSchema() {
+                if (this._alertSchema) return this._alertSchema;
+                const cfg = CONFIG.dischargeAlertFields;
+                console.debug('Discharge Alerts metadata resolution started', { parentEntity: CONFIG.tables.patient });
+                const definitions = await this.getEntityDefinitions();
+                const definitionMap = new Map(definitions.map(entity => [entity.LogicalName, entity]));
+                const parentDef = definitionMap.get(CONFIG.tables.patient) || {};
+                const relationships = await this.getOneToManyRelationships(CONFIG.tables.patient);
+                const alertRelationships = relationships
+                    .filter(rel => rel.ReferencedEntity === CONFIG.tables.patient && rel.ReferencingEntity)
+                    .filter(rel => {
+                        const entityName = String(rel.ReferencingEntity || '').toLowerCase();
+                        const entityDisplayName = String(getLocalizedLabel((definitionMap.get(rel.ReferencingEntity) || {}).DisplayName) || '').toLowerCase();
+                        const schemaName = String(rel.SchemaName || '').toLowerCase();
+                        const text = `${entityName} ${entityDisplayName} ${schemaName}`;
+                        return text.includes('alert') || text.includes('discharge');
+                    })
+                    .sort((a, b) => {
+                        const aName = `${a.ReferencingEntity || ''} ${a.SchemaName || ''}`.toLowerCase();
+                        const bName = `${b.ReferencingEntity || ''} ${b.SchemaName || ''}`.toLowerCase();
+                        const aScore = aName.includes('discharge') ? 0 : 1;
+                        const bScore = bName.includes('discharge') ? 0 : 1;
+                        return aScore - bScore || aName.localeCompare(bName);
+                    });
+                const candidates = alertRelationships.filter((rel, index, all) =>
+                    index === all.findIndex(item => item.ReferencingEntity === rel.ReferencingEntity && item.ReferencingAttribute === rel.ReferencingAttribute)
+                );
+                console.debug('Discharge Alerts candidate relationships', candidates);
+
+                const failures = [];
+                for (const rel of candidates) {
+                    const logicalName = rel.ReferencingEntity;
+                    const entityDef = definitionMap.get(logicalName);
+                    if (!entityDef) {
+                        failures.push({ logicalName, relationship: rel.SchemaName, reason: 'Referencing entity was not present in EntityDefinitions' });
+                        continue;
+                    }
+                    const attrs = await this.getEntityAttributes(logicalName);
+                    if (!attrs || attrs.size === 0) {
+                        failures.push({ logicalName, relationship: rel.SchemaName, reason: 'No attributes returned' });
+                        continue;
+                    }
+                    const attrMeta = await this.getAttributeMetadata(logicalName);
+                    const lookupAttrs = await this.getLookupAttributes(logicalName);
+                    const patientLookup = lookupAttrs.find(attr => attr.LogicalName === rel.ReferencingAttribute) ||
+                        lookupAttrs.find(attr => (attr.Targets || []).includes(CONFIG.tables.patient));
+                    if (!patientLookup) {
+                        failures.push({ logicalName, relationship: rel.SchemaName, reason: 'No lookup targeting Patient Discharge was found' });
+                        continue;
+                    }
+                    const lookupLogical = patientLookup.LogicalName || rel.ReferencingAttribute;
+                    const lookupSchema = patientLookup.SchemaName || lookupLogical;
+                    const lookupValue = `_${lookupLogical}_value`;
+                    const id = entityDef.PrimaryIdAttribute || cfg.idAliases.find(field => attrs.has(field)) || `${logicalName}id`;
+                    const primaryName = entityDef.PrimaryNameAttribute || '';
+                    const title = cfg.titleAliases.find(field => attrs.has(field)) || primaryName;
+                    const comment = cfg.commentAliases.find(field => attrs.has(field)) ||
+                        attrMeta.find(attr => /comment|description/i.test(`${attr.LogicalName || ''} ${getLocalizedLabel(attr.DisplayName)}`))?.LogicalName ||
+                        title;
+                    const status = cfg.statusAliases.find(field => attrs.has(field));
+                    const severity = cfg.severityAliases.find(field => attrs.has(field)) ||
+                        attrMeta.find(attr => /severity|priority|type/i.test(`${attr.LogicalName || ''} ${getLocalizedLabel(attr.DisplayName)}`))?.LogicalName;
+                    const selectFields = [...new Set([id, title, comment, status, severity, lookupValue, 'createdon', '_createdby_value'].filter(Boolean))];
+                    this._alertSchema = {
+                        logicalName,
+                        displayName: getLocalizedLabel(entityDef.DisplayName) || logicalName,
+                        entitySet: entityDef.EntitySetName || await this.getEntitySetName(logicalName),
+                        primaryIdAttribute: id,
+                        primaryNameAttribute: primaryName,
+                        id,
+                        title,
+                        comment,
+                        status,
+                        severity,
+                        lookupLogical,
+                        lookupSchema,
+                        lookupValue,
+                        bindName: lookupSchema,
+                        relationshipSchemaName: rel.SchemaName,
+                        relationship: rel,
+                        lookupAttributes: lookupAttrs,
+                        selectFields
+                    };
+                    console.debug('Resolved Discharge Alert schema', {
+                        parentEntity: CONFIG.tables.patient,
+                        parentEntitySet: parentDef.EntitySetName,
+                        relationship: rel,
+                        alertLogicalName: logicalName,
+                        alertDisplayName: this._alertSchema.displayName,
+                        alertEntitySetName: this._alertSchema.entitySet,
+                        primaryIdAttribute: id,
+                        primaryNameAttribute: primaryName,
+                        patientDischargeLookup: lookupLogical,
+                        lookupTargets: patientLookup.Targets,
+                        allLookups: lookupAttrs
+                    });
+                    return this._alertSchema;
+                }
+                console.debug('Discharge Alerts metadata resolution failed', { parentEntity: CONFIG.tables.patient, relationships, candidates, failures });
+                const err = new Error('Unable to resolve Discharge Alert table schema from Patient Discharge relationships');
+                err.relationships = relationships;
+                err.candidates = candidates;
+                err.failures = failures;
+                throw err;
+            },
+
+            async getDischargeAlerts(patientId) {
+                const id = normalizeGuid(patientId);
+                const schema = await this.resolveDischargeAlertSchema();
+                const patient = State.selectedPatient || {};
+                const selectedFields = schema.selectFields || [schema.id, schema.comment, schema.lookupValue].filter(Boolean);
+                const q = { $top: 50 };
+                if (selectedFields.length) q.$select = selectedFields.join(',');
+                if (schema.lookupValue) q.$filter = `${schema.lookupValue} eq ${id}`;
+                if (selectedFields.includes('createdon')) q.$orderby = 'createdon desc';
+                const response = await this.fetchCollectionWithRetry(schema.entitySet, q, { allowDropFilter: false, fetchAllPages: true });
+                console.debug('Discharge Alerts loaded', { alertLogicalName: schema.logicalName, filterLookup: schema.lookupValue, alertCount: safeGet(response, 'value', []).length });
+                response.value = safeGet(response, 'value', []).map(row => Object.assign({}, row, {
+                    __patientName: patient[CONFIG.fields.patientName],
+                    __patientId: firstRawValue(patient, CONFIG.patientAliases.patientId, '')
+                }));
+                return response;
+            },
+
+            async createDischargeAlert(patientId, comment) {
+                const id = normalizeGuid(patientId);
+                const schema = await this.resolveDischargeAlertSchema();
+                const patientEntitySet = await this.getEntitySetName(CONFIG.tables.patient);
+                const bindNames = [schema.bindName, schema.lookupSchema, schema.lookupLogical].filter(Boolean);
+                let lastError = null;
+                for (const bindName of [...new Set(bindNames)]) {
+                    const payload = { [schema.comment]: comment, [`${bindName}@odata.bind`]: `/${patientEntitySet}(${id})` };
+                    try {
+                        return await this.fetchJson(this.buildUrl(schema.entitySet), { method: 'POST', body: JSON.stringify(payload) });
+                    } catch (err) {
+                        lastError = err;
+                        const missing = this.parseMissingProperty(err);
+                        if (!missing || !Object.keys(payload).some(key => key.toLowerCase().indexOf(`${missing.toLowerCase()}@`) === 0)) throw err;
+                    }
+                }
+                throw lastError || new Error('Unable to create Discharge Alert');
+            },
+
+            async uploadActivityFile(activityId, file) { const nid = normalizeGuid(activityId); const entitySet = await this.getEntitySetName(CONFIG.tables.activity); const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}(${nid})/new_attachment/$value`; try { const res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file }); if (!res.ok) throw new Error(`Upload failed ${res.status}`); return true; } catch (err) { console.error('uploadActivityFile', err); throw err; } },
+
+            async downloadActivityFile(activityId) { const nid = normalizeGuid(activityId); const entitySet = await this.getEntitySetName(CONFIG.tables.activity); const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}(${nid})/new_attachment/$value`; try { const res = await fetch(url); if (!res.ok) throw new Error(`Download failed ${res.status}`); const blob = await res.blob(); return blob; } catch (err) { console.error('downloadActivityFile', err); throw err; } },
+
+            async getEarlyDischarges({ top = 100 } = {}) {
+                const ef = CONFIG.earlyFields;
+                const desired = [ef.id, ef.dischargeDate, ef.alternateDate, ef.status, ef.countOfPatients, ef.submissionDate, ef.submittedBy, ef.createdOn];
+                const validAttrs = await this.filterValidAttributes(CONFIG.tables.early, desired);
+                const q = { $top: top };
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                if (validAttrs.includes(ef.dischargeDate)) q.$orderby = `${ef.dischargeDate} desc`;
+                else if (validAttrs.includes(ef.alternateDate)) q.$orderby = `${ef.alternateDate} desc`;
+                else if (validAttrs.includes(ef.createdOn)) q.$orderby = `${ef.createdOn} desc`;
+                const entitySet = await this.getEntitySetName(CONFIG.tables.early);
+                return await this.fetchCollectionWithRetry(entitySet, q, { fetchAllPages: false });
+            },
+
+            async getEarlyDischargeDraft(dateIso) {
+                return await this.getEarlyDischarges({ top: 1 });
+            },
+
+            async getEarlyDischargePatients(parentId) {
+                const id = normalizeGuid(parentId);
+                const ipd = CONFIG.earlyIpdFields;
+                const desired = [ipd.id, ipd.name, ipd.patientCodeValue, ipd.visitId, ipd.dischargeType, ipd.cancellationReason, ipd.isSubmitted, 'createdon', 'modifiedon'];
+                const validAttrs = await this.filterValidAttributes(CONFIG.tables.earlyIpd, desired);
+                const entitySet = await this.getEntitySetName(CONFIG.tables.earlyIpd);
+                const filter = `_and_earlydischarge_value eq ${id}`;
+                console.debug('getEarlyDischargePatients ->', { parentId, entityLogical: CONFIG.tables.earlyIpd, entitySet, filter });
+                const q = { $filter: filter };
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                return await this.fetchCollectionWithRetry(entitySet, q);
+            },
+
+            async searchInpatients(searchText) {
+                const f = CONFIG.inpatientFields;
+                const desired = [f.id, f.name, f.patientName, f.patientId, f.visitId, f.room, f.bed, f.physician, f.specialty, f.admissionDate, ...CONFIG.inpatientAliases.nurseStation, ...CONFIG.inpatientAliases.admissionDoctor];
+                const validAttrs = await this.filterValidAttributes(CONFIG.tables.inpatient, desired);
+                const q = { $top: 25 };
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                if (searchText) {
+                    const s = searchText.replace(/'/g, "''");
+                    const searchable = [f.name, f.patientName, f.patientId, f.visitId].filter(field => !validAttrs.length || validAttrs.includes(field));
+                    if (searchable.length) q.$filter = searchable.map(field => `contains(${field},'${s}')`).join(' or ');
+                }
+                const entitySet = await this.getEntitySetName(CONFIG.tables.inpatient);
+                return await this.fetchCollectionWithRetry(entitySet, q, { allowDropFilter: true, fetchAllPages: false });
+            },
+
+            async getInpatientById(id) {
+                const nid = normalizeGuid(id);
+                if (!nid) return null;
+                const f = CONFIG.inpatientFields;
+                const desired = [f.id, f.name, f.patientName, f.patientId, f.visitId, f.room, f.bed, f.physician, f.specialty, f.admissionDate, ...CONFIG.inpatientAliases.nurseStation, ...CONFIG.inpatientAliases.admissionDoctor];
+                const validAttrs = await this.filterValidAttributes(CONFIG.tables.inpatient, desired);
+                const entitySet = await this.getEntitySetName(CONFIG.tables.inpatient);
+                const q = {};
+                if (validAttrs.length) q.$select = validAttrs.join(',');
+                return await this.fetchRecordWithRetry(entitySet, nid, q);
+            },
+
+            async addEarlyDischargePatient(parentId, payload) {
+                const id = normalizeGuid(parentId);
+                const entitySet = await this.getEntitySetName(CONFIG.tables.earlyIpd);
+                const parentEntitySet = await this.getEntitySetName(CONFIG.tables.early);
+                const inpatientEntitySet = await this.getEntitySetName(CONFIG.tables.inpatient);
+                const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}`;
+                const patientCodeLookupId = normalizeGuid(payload.__inpatientId);
+                const basePayload = Object.assign({}, payload);
+                delete basePayload.__inpatientId;
+                const parentLookups = CONFIG.lookupBindings.earlyIpdParent;
+                const patientLookups = patientCodeLookupId ? CONFIG.lookupBindings.earlyIpdPatientCode : [null];
+                let lastError = null;
+                for (const parentLookup of parentLookups) {
+                    for (const patientLookup of patientLookups) {
+                        let nextPayload = Object.assign({}, basePayload, { [`${parentLookup}@odata.bind`]: `/${parentEntitySet}(${id})` });
+                        if (patientLookup && patientCodeLookupId) nextPayload[`${patientLookup}@odata.bind`] = `/${inpatientEntitySet}(${patientCodeLookupId})`;
+                        for (let attempt = 0; attempt < 8; attempt++) {
+                            try {
+                                return await this.fetchJson(url, { method: 'POST', body: JSON.stringify(nextPayload) });
+                            } catch (err) {
+                                lastError = err;
+                                const missing = this.parseMissingProperty(err);
+                                const badKey = missing ? Object.keys(nextPayload).find(key => key === missing || key.toLowerCase() === missing.toLowerCase() || key.toLowerCase().indexOf(`${missing.toLowerCase()}@`) === 0) : null;
+                                if (!badKey) throw err;
+                                if (badKey.indexOf('@odata.bind') !== -1 && (badKey.toLowerCase().includes('earlydischarge') || badKey.toLowerCase().includes('patientcode'))) break;
+                                delete nextPayload[badKey];
+                                console.warn('Retrying early discharge patient create without missing property', missing);
+                            }
+                        }
+                    }
+                }
+                throw lastError || new Error('Unable to create early discharge patient row');
+            },
+
+            async updateEarlyDischargeCount(id, count) {
+                const nid = normalizeGuid(id);
+                const ef = CONFIG.earlyFields;
+                const validAttrs = await this.filterValidAttributes(CONFIG.tables.early, [ef.countOfPatients]);
+                if (!validAttrs.includes(ef.countOfPatients)) return false;
+                const entitySet = await this.getEntitySetName(CONFIG.tables.early);
+                const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}(${nid})`;
+                await this.fetchJson(url, { method: 'PATCH', body: JSON.stringify({ [ef.countOfPatients]: Number(count) }) });
+                return true;
+            },
+
+            async submitEarlyDischarge(id, payload) { const nid = normalizeGuid(id); const entitySet = await this.getEntitySetName(CONFIG.tables.early); const url = `${this.getClientUrl()}/api/data/${CONFIG.api.version}/${entitySet}(${nid})`; return await this.fetchJson(url, { method: 'PATCH', body: JSON.stringify(payload) }); }
+        };
+
+        const State = { currentTab: 'worklist', worklist: { page: 0, pageSize: CONFIG.api.pageSize, search: '', status: '', dischargeDate: '' }, patients: [], patientsLoaded: false, dashboardPatients: [], dashboardPatientsLoaded: false, selectedPatient: null, selectedEarlyDraft: null, activities: [], activityCache: {} };
+        function $(sel) { return document.querySelector(sel); }
+        function $id(id) { return document.getElementById(id); }
+
+        async function init() { bindNav(); bindHeaderControls(); renderCurrentUser(); bindWorklist(); await loadWorklist(); }
+
+        function bindNav() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => { switchTab(btn.dataset.tab); });
+            });
+            $id('backToWorklist').addEventListener('click', () => { switchTab('worklist'); });
+            $id('backToEarlyList').addEventListener('click', () => { switchTab('early'); });
+            const openPatientRecord = $id('openPatientRecord');
+            if (openPatientRecord) openPatientRecord.addEventListener('click', () => {
+                if (!State.selectedPatient) return;
+                openModelDrivenForm(CONFIG.tables.patient, State.selectedPatient[CONFIG.fields.id]);
+            });
+        }
+        
+        // add header refresh binding
+        function bindHeaderControls() {
+            const hdr = $id('headerRefresh');
+            if (hdr) hdr.addEventListener('click', () => {
+                if (State.currentTab === 'worklist') loadWorklist({ force: true });
+                else if (State.currentTab === 'patientPanel') { if (State.selectedPatient) refreshPatientWorkspace({ forceDataset: true }); }
+                else if (State.currentTab === 'earlyPanel') { if (State.selectedEarlyDraft) renderEarlyDraftWorkspace(State.selectedEarlyDraft); }
+                else if (State.currentTab === 'early') renderEarlyDischarge();
+            });
+        }
+
+        function switchTab(tab) { State.currentTab = tab; document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden')); const activePanel = $id(tab); if (activePanel) activePanel.classList.remove('hidden'); document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab)); if (tab === 'worklist') loadWorklist(); if (tab === 'early') renderEarlyDischarge(); }
+
+        async function renderCurrentUser() { try { let name = 'Unknown User'; if (XrmContext && XrmContext.Utility && XrmContext.Utility.getGlobalContext) { const ctx = XrmContext.Utility.getGlobalContext(); const u = ctx.userSettings || {}; name = u.userName || u.fullName || name; } const el = $id('currentUser'); if (!el) return; const initials = name.split(' ').map(s=>s[0]).filter(Boolean).slice(0,2).join('').toUpperCase(); el.innerHTML = `<div class="user-inline"><div class="avatar">${initials}</div><div class="small">${name}</div></div>`; } catch (e) { console.error(e); } }
+
+	        function updateLastUpdated() { const el = $id('lastUpdated'); if (!el) return; el.textContent = 'Updated ' + new Date().toLocaleTimeString(); }
+
+        function sortPatientsNewestFirst(rows) {
+            const sortTime = (row) => {
+                const candidates = [row[CONFIG.fields.lastActivity], row.modifiedon, row[CONFIG.fields.createdOn]];
+                for (const value of candidates) {
+                    const time = new Date(value || 0).getTime();
+                    if (!Number.isNaN(time) && time > 0) return time;
+                }
+                return 0;
+            };
+            return rows.slice().sort((a, b) => sortTime(b) - sortTime(a));
+        }
+
+        async function loadPatientDataset({ force = false } = {}) {
+            if (State.patientsLoaded && !force) return State.patients;
+            const data = await DataverseService.getDischargePatients({ top: CONFIG.api.pageSize, filters: { fetchAllPages: false } });
+            State.patients = sortPatientsNewestFirst(safeGet(data, 'value', []));
+            State.patientsLoaded = true;
+            populateWorklistFilters(State.patients);
+            return State.patients;
+        }
+
+        async function loadTodayDashboardDataset({ force = false } = {}) {
+            if (State.dashboardPatientsLoaded && !force) return State.dashboardPatients;
+            const range = todayCreatedOnFilter();
+            const data = await DataverseService.getDischargePatients({
+                top: CONFIG.api.dashboardPageSize,
+                filters: { createdOnFrom: range.from, createdOnTo: range.to, fetchAllPages: false }
+            });
+            State.dashboardPatients = sortPatientsNewestFirst(safeGet(data, 'value', []));
+            State.dashboardPatientsLoaded = true;
+            return State.dashboardPatients;
+        }
+
+        function getLocalDateKey(value) {
+            if (isBlank(value)) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getFilteredPatients() {
+            const search = (State.worklist.search || '').toLowerCase().trim();
+            const status = State.worklist.status;
+            const dischargeDate = State.worklist.dischargeDate;
+            return State.patients.filter(r => {
+                if (status !== '' && String(r[CONFIG.fields.status]) !== String(status)) return false;
+                const rowDischargeDate = firstRawValue(r, [CONFIG.fields.physicianDischargeDate, CONFIG.fields.physicianDischargeDateFormula], '');
+                if (dischargeDate && getLocalDateKey(rowDischargeDate) !== dischargeDate) return false;
+                if (!search) return true;
+                const p = getPatientDisplayData(r);
+                const haystack = Object.values(p).join(' ').toLowerCase();
+                return haystack.includes(search);
+            });
+        }
+
+        function populateWorklistFilters(rows) {
+            const statusFilter = $id('statusFilter');
+            if (!statusFilter) return;
+            const currentValue = statusFilter.value;
+            statusFilter.innerHTML = '<option value="">All Statuses</option>';
+            Object.entries(CHOICE_MAPS.patientDischargeStatus).forEach(([value, label]) => {
+                if (rows.some(r => String(r[CONFIG.fields.status]) === String(value))) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = label;
+                    statusFilter.appendChild(option);
+                }
+            });
+            statusFilter.value = currentValue;
+        }
+
+        function updateAttentionSummary(rows) {
+	            const el = $id('attentionSummary');
+	            if (!el || !Array.isArray(rows)) return;
+            const pending = rows.filter(r => !choiceEquals(r[CONFIG.fields.status], CONFIG.choices.patientStatus.completed)).length;
+            el.textContent = `${pending} pending`;
+        }
+
+	        function showAppMessage(title, message, type = 'info') {
+	            const modalRoot = $id('modalRoot');
+	            const statusClass = type === 'error' ? 'status-danger' : type === 'success' ? 'status-success' : 'status-info';
+	            modalRoot.innerHTML = `<div class="modal-backdrop"></div><div class="modal"><div><div class="status-badge ${statusClass}">${type}</div><div class="activity-title" style="margin-top:10px">${title}</div><div class="small" style="margin-top:6px">${message}</div><div class="form-actions" style="margin-top:16px"><button id="closeAppMessage" class="btn-primary">Close</button></div></div></div>`;
+	            const close = $id('closeAppMessage');
+	            if (close) close.addEventListener('click', () => { modalRoot.innerHTML = ''; });
+	        }
+
+        function getStatusClass(label, value) {
+            const text = (label || '').toString().toLowerCase();
+            if (text.includes('complete') || text.includes('clear') || text.includes('submit')) return 'status-success';
+            if (text.includes('forward')) return 'status-forward';
+            if (text.includes('delay') || text.includes('cancel') || text.includes('miss')) return 'status-danger';
+            if (text.includes('pending') || choiceEquals(value, CONFIG.choices.activityAction.pending)) return 'status-warning';
+            return 'status-info';
+        }
+
+        function getPatientDisplayData(r) {
+            return {
+                patientName: displayValue(r, CONFIG.fields.patientName, null, ''),
+                reference: displayValue(r, CONFIG.fields.name, null, ''),
+                patientId: firstDisplayValue(r, CONFIG.patientAliases.patientId, ''),
+                patientCode: firstDisplayValue(r, CONFIG.patientAliases.patientCode, ''),
+                visitId: displayValue(r, CONFIG.fields.visitId, null, ''),
+                businessUnit: displayValue(r, CONFIG.fields.businessUnit, null, ''),
+                modifiedDate: displayDateTime(r, 'modifiedon', ''),
+                createdDate: displayDateTime(r, CONFIG.fields.createdOn, ''),
+                admissionDate: displayDateTime(r, CONFIG.fields.admissionDate, ''),
+                age: displayValue(r, CONFIG.fields.age, null, ''),
+                room: displayValue(r, CONFIG.fields.room, null, ''),
+                bed: displayValue(r, CONFIG.fields.bed, null, ''),
+                floor: displayValue(r, CONFIG.fields.floor, null, ''),
+                nurseStation: displayValue(r, CONFIG.fields.nurseStation, null, ''),
+                physician: displayValue(r, CONFIG.fields.physician, null, ''),
+                admissionDoctor: firstDisplayValue(r, CONFIG.patientFieldAliases.admissionDoctor, ''),
+                specialty: displayValue(r, CONFIG.fields.specialty, null, ''),
+                diagnosis: displayValue(r, CONFIG.fields.diagnosis, null, ''),
+                paymentType: displayValue(r, CONFIG.fields.paymentType, null, ''),
+                contract: displayValue(r, CONFIG.fields.contract, null, ''),
+                contractor: displayValue(r, CONFIG.fields.contractor, null, ''),
+                phoneNumber: displayValue(r, CONFIG.fields.phoneNumber, null, ''),
+                gender: displayChoice(r, CONFIG.tables.patient, CONFIG.fields.gender, ''),
+                dischargeType: displayChoice(r, CONFIG.tables.patient, CONFIG.fields.dischargeType, ''),
+                earlyFlag: displayChoice(r, CONFIG.tables.patient, CONFIG.fields.earlyFlag, ''),
+                hasHomeMedications: displayValue(r, CONFIG.fields.hasHomeMedications, null, ''),
+                homeMedicationTime: displayDateTime(r, CONFIG.fields.homeMedicationTime, ''),
+                homeMedicationsDate: displayDateTime(r, CONFIG.fields.homeMedicationsDate, ''),
+                homeMedicationsFlag: displayValue(r, CONFIG.fields.homeMedicationsFlag, null, ''),
+                fileScanStatus: firstDisplayValue(r, CONFIG.patientFieldAliases.fileScanStatus, ''),
+                lastActivity: displayDateTime(r, CONFIG.fields.lastActivity, '') || displayValue(r, CONFIG.fields.lastActivity, null, ''),
+                los: displayValue(r, CONFIG.fields.los, null, ''),
+                losDays: displayValue(r, CONFIG.fields.losDays, null, ''),
+                outpatientClearanceDate: displayDateTime(r, CONFIG.fields.outpatientClearanceDate, ''),
+                outpatientPharmacyPending: displayValue(r, CONFIG.fields.outpatientPharmacyPending, null, ''),
+                physicalTAT: displayValue(r, CONFIG.fields.physicalTAT, null, ''),
+                physicalTATDate: displayDateTime(r, CONFIG.fields.physicalTATDate, ''),
+                physicalTATState: displayValue(r, CONFIG.fields.physicalTATState, null, ''),
+                physicalDischargeTAT: displayValue(r, CONFIG.fields.physicalDischargeTAT, null, ''),
+                physicianDischargeDate: firstDisplayDateTime(r, [CONFIG.fields.physicianDischargeDate, CONFIG.fields.physicianDischargeDateFormula], ''),
+                slaCategory: displayValue(r, CONFIG.fields.slaCategory, null, ''),
+                cancellationReason: displayValue(r, CONFIG.fields.cancellationReason, null, ''),
+                cancelled: displayValue(r, CONFIG.fields.cancelled, null, ''),
+                alertFlag: displayValue(r, CONFIG.fields.alertFlag, null, ''),
+                smsSendDateTime: displayDateTime(r, CONFIG.fields.smsSendDateTime, ''),
+                currentStep: displayValue(r, CONFIG.fields.currentStep, null, ''),
+                pendingOn: displayChoice(r, CONFIG.tables.patient, CONFIG.fields.pendingOn, ''),
+                status: displayChoice(r, CONFIG.tables.patient, CONFIG.fields.status, ''),
+                tat: displayValue(r, CONFIG.fields.physicalTAT, null, ''),
+                delayed: displayValue(r, CONFIG.fields.isDelayed, null, '')
+            };
+        }
+
+        function renderTodayKpis(rows) {
+            const kpis = $id('kpis');
+            if (!kpis) return;
+            kpis.innerHTML = '';
+            const pending = rows.filter(r => {
+                const label = displayChoice(r, CONFIG.tables.patient, CONFIG.fields.status, '').toLowerCase();
+                return label.includes('pending') || choiceEquals(r[CONFIG.fields.status], CONFIG.choices.patientStatus.pending);
+            }).length;
+            const delayed = rows.filter(r => {
+                const delayedValue = displayChoice(r, CONFIG.tables.patient, CONFIG.fields.isDelayed, r[CONFIG.fields.isDelayed]);
+                return isTruthyChoice(delayedValue);
+            }).length;
+            const completed = rows.filter(r => choiceEquals(r[CONFIG.fields.status], CONFIG.choices.patientStatus.completed)).length;
+            [
+                ['Today Discharges', rows.length],
+                ['Today Pending / Delayed', pending + delayed],
+                ['Completed Today', completed],
+                ['Today Priority', delayed || pending]
+            ].forEach(([label, value]) => {
+                const card = document.createElement('div');
+                card.className = 'kpi';
+                card.innerHTML = `<div class="kpi-title">${label}</div><div class="kpi-value">${value}</div>`;
+                kpis.appendChild(card);
+            });
+        }
+
+        function bindWorklist() {
+            $id('refreshWorklist').addEventListener('click', () => loadWorklist({ force: true }));
+            $id('searchBox').addEventListener('keyup', debounce((e) => { State.worklist.search = e.target.value; loadWorklist(); }, 400));
+            $id('statusFilter').addEventListener('change', (e) => { State.worklist.status = e.target.value; loadWorklist(); });
+            const dischargeDateFilter = $id('dischargeDateFilter');
+            if (dischargeDateFilter) {
+                dischargeDateFilter.value = State.worklist.dischargeDate;
+                dischargeDateFilter.addEventListener('change', (e) => { State.worklist.dischargeDate = e.target.value; loadWorklist(); });
+            }
+            const clearDateFilter = $id('clearDateFilter');
+            if (clearDateFilter) clearDateFilter.addEventListener('click', () => {
+                State.worklist.dischargeDate = '';
+                if (dischargeDateFilter) dischargeDateFilter.value = '';
+                loadWorklist();
+            });
+        }
+
+        async function loadWorklist({ force = false } = {}) { const container = $id('worklistContainer'); const kpis = $id('kpis'); if (kpis) kpis.innerHTML = '<div class="loading">Loading counts...</div>'; container.innerHTML = '<div class="loading">Loading patient discharges...</div>'; try { await loadPatientDataset({ force }); const rows = getFilteredPatients(); renderTodayKpis(rows); updateAttentionSummary(rows); renderWorklistTable(rows); } catch (e) { console.error('Unable to load complete patient discharge dataset', e); if (kpis) kpis.innerHTML = '<div class="empty-state"><div class="eyebrow">Unable to load</div><div>Unable to load counts.</div></div>'; container.innerHTML = '<div class="empty-state"><div class="eyebrow">Unable to load</div><div>Unable to load all patient discharges.</div><div style="margin-top:12px"><button id="retryWorklist" class="btn-primary">Retry</button></div></div>'; setTimeout(() => { const btn = $id('retryWorklist'); if (btn) btn.addEventListener('click', () => loadWorklist({ force: true })); }, 0); } }
+
+        // update last-updated when worklist loaded
+        async function loadWorklistWithUpdate() { await loadWorklist(); updateLastUpdated(); }
+
+        function renderWorklistTable(rows) {
+            const container = $id('worklistContainer');
+            if (!rows.length) { container.innerHTML = '<div class="small">No active discharge cases found.</div>'; return; }
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            thead.innerHTML = `<tr><th class="expand-cell"></th><th>Status</th><th>Current Step</th><th>Patient Name</th><th>Home Medications Flag</th><th>File Scan Status</th><th>Discharge Type</th><th>Cancellation Reason</th><th>Alert Flag</th><th>Pending On</th><th>Team Name</th><th>Patient ID</th><th>Visit ID</th><th>Room</th><th>Bed</th><th>Nurse Station</th><th>Last Activity</th><th>Physician Name</th><th>Admission Doctor</th><th>Physician Discharge Date</th><th>Admission Date</th><th>Floor</th><th>Age</th><th>Payment Type</th><th>Contract</th><th>Contractor</th><th>Specialty</th><th>Has Home Medications</th><th>Home Medications Date</th><th>Created Date</th><th>Physical Discharge TAT</th><th>SLA Category</th></tr>`;
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            rows.forEach(r => {
+                const tr = document.createElement('tr');
+                const p = getPatientDisplayData(r);
+                const rowId = r[CONFIG.fields.id] || r[CONFIG.fields.id.toLowerCase()] || '';
+                let statusClass = getStatusClass(p.status, r[CONFIG.fields.status]);
+                if (isTruthyChoice(p.delayed)) tr.classList.add('delayed');
+
+                tr.innerHTML = `
+                    <td class="expand-cell"><button class="expand-btn" type="button" aria-label="Show discharge steps">›</button></td>
+                    <td><span class="status-badge ${statusClass}">${escapeHtml(p.status || '-')}</span></td>
+                    <td class="small current-step-cell" data-patient-id="${escapeHtml(rowId)}">${escapeHtml(p.currentStep || '-')}</td>
+                    <td class="patient-cell"><div class="name">${escapeHtml(p.patientName || '-')}</div></td>
+                    <td class="small">${escapeHtml(p.homeMedicationsFlag || '-')}</td>
+                    <td class="small">${escapeHtml(p.fileScanStatus || '-')}</td>
+                    <td class="small">${escapeHtml(p.dischargeType || '-')}</td>
+                    <td class="small">${escapeHtml(p.cancellationReason || '-')}</td>
+                    <td class="small">${escapeHtml(p.alertFlag || '-')}</td>
+                    <td class="small">${escapeHtml(p.pendingOn || '-')}</td>
+                    <td class="small">${escapeHtml(p.businessUnit || '-')}</td>
+                    <td class="small">${escapeHtml(p.patientId || '-')}</td>
+                    <td class="small">${escapeHtml(p.visitId || '-')}</td>
+                    <td class="small">${escapeHtml(p.room || '-')}</td>
+                    <td class="small">${escapeHtml(p.bed || '-')}</td>
+                    <td class="small">${escapeHtml(p.nurseStation || '-')}</td>
+                    <td class="small">${escapeHtml(p.lastActivity || '-')}</td>
+                    <td class="small">${escapeHtml(p.physician || '-')}</td>
+                    <td class="small">${escapeHtml(p.admissionDoctor || '-')}</td>
+                    <td class="small">${escapeHtml(p.physicianDischargeDate || '-')}</td>
+                    <td class="small">${escapeHtml(p.admissionDate || '-')}</td>
+                    <td class="small">${escapeHtml(p.floor || '-')}</td>
+                    <td class="small">${escapeHtml(p.age || '-')}</td>
+                    <td class="small">${escapeHtml(p.paymentType || '-')}</td>
+                    <td class="small">${escapeHtml(p.contract || '-')}</td>
+                    <td class="small">${escapeHtml(p.contractor || '-')}</td>
+                    <td class="small">${escapeHtml(p.specialty || '-')}</td>
+                    <td class="small">${escapeHtml(p.hasHomeMedications || '-')}</td>
+                    <td class="small">${escapeHtml(p.homeMedicationsDate || p.homeMedicationTime || '-')}</td>
+                    <td class="small">${escapeHtml(p.createdDate || '-')}</td>
+                    <td class="small">${escapeHtml(p.physicalDischargeTAT || '-')}</td>
+                    <td class="small">${escapeHtml(p.slaCategory || '-')}</td>
+                `;
+                tr.addEventListener('click', () => openPatientWorkspace(r));
+                tbody.appendChild(tr);
+                const details = document.createElement('tr');
+                details.className = 'steps-row hidden';
+                details.innerHTML = '<td colspan="32"><div class="steps-loading">Loading steps...</div></td>';
+                tbody.appendChild(details);
+                const expandBtn = tr.querySelector('.expand-btn');
+                expandBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    toggleWorklistSteps(r, details, expandBtn);
+                });
+            });
+            table.appendChild(tbody);
+            container.innerHTML = ''; container.appendChild(table);
+            updateLastUpdated();
+            prefetchVisibleSteps(rows);
+            enrichVisibleCurrentSteps(rows);
+        }
+
+        async function getCachedActivities(patientId) {
+            const id = normalizeGuid(patientId);
+            if (!id) return [];
+            const cached = State.activityCache[id];
+            if (cached) return await cached;
+            const promise = DataverseService.getActivities(id)
+                .then(response => safeGet(response, 'value', []))
+                .catch(err => {
+                    delete State.activityCache[id];
+                    throw err;
+                });
+            State.activityCache[id] = promise;
+            const activities = await promise;
+            State.activityCache[id] = activities;
+            return activities;
+        }
+
+        function prefetchVisibleSteps(rows) {
+            const ids = rows.slice(0, 8)
+                .map(r => normalizeGuid(r[CONFIG.fields.id] || r[CONFIG.fields.id.toLowerCase()]))
+                .filter(Boolean)
+                .filter(id => !State.activityCache[id]);
+            ids.forEach((id, index) => {
+                setTimeout(() => {
+                    getCachedActivities(id).catch(err => console.debug('Step prefetch failed', id, err));
+                }, index * 120);
+            });
+        }
+
+        function getCurrentStepFromActivities(activities) {
+            if (!activities || !activities.length) return '';
+            const current = activities.find(i => !choiceEquals(i.crad2_status, CONFIG.choices.activityAction.cleared)) || activities[activities.length - 1];
+            return current ? displayValue(current, 'crad2_subject', null, '') : '';
+        }
+
+        function enrichVisibleCurrentSteps(rows) {
+            rows.slice(0, 30).forEach((row, index) => {
+                const rowId = row[CONFIG.fields.id] || row[CONFIG.fields.id.toLowerCase()] || '';
+                const id = normalizeGuid(rowId);
+                if (!id) return;
+                setTimeout(() => {
+                    getCachedActivities(id).then(activities => {
+                        const subject = getCurrentStepFromActivities(activities);
+                        if (!subject) return;
+                        document.querySelectorAll(`.current-step-cell[data-patient-id="${escapeCssValue(rowId)}"]`).forEach(cell => {
+                            cell.textContent = subject;
+                        });
+                    }).catch(err => console.debug('Current step enrichment failed', id, err));
+                }, 80 + index * 90);
+            });
+        }
+
+        async function toggleWorklistSteps(patientRecord, detailsRow, button) {
+            const isOpen = !detailsRow.classList.contains('hidden');
+            if (isOpen) {
+                detailsRow.classList.add('hidden');
+                button.classList.remove('active');
+                button.textContent = '›';
+                button.setAttribute('aria-label', 'Show discharge steps');
+                return;
+            }
+            detailsRow.classList.remove('hidden');
+            button.classList.add('active');
+            button.textContent = '⌄';
+            button.setAttribute('aria-label', 'Hide discharge steps');
+            if (detailsRow.dataset.loaded === 'true') return;
+            const patientId = patientRecord[CONFIG.fields.id] || patientRecord[CONFIG.fields.id.toLowerCase()];
+            try {
+                const activities = await getCachedActivities(patientId);
+                renderWorklistSteps(detailsRow, activities);
+                detailsRow.dataset.loaded = 'true';
+            } catch (err) {
+                console.error('Unable to load discharge steps', err);
+                detailsRow.innerHTML = '<td colspan="32"><div class="steps-loading">Unable to load steps.</div></td>';
+            }
+        }
+
+        function renderWorklistSteps(detailsRow, activities) {
+            if (!activities.length) {
+                detailsRow.innerHTML = '<td colspan="32"><div class="steps-loading">No discharge steps found.</div></td>';
+                return;
+            }
+            const rows = activities.map((activity, index) => {
+                const subject = displayValue(activity, 'crad2_subject', null, '-');
+                const owner = safeGet(activity, '_ownerid_value@OData.Community.Display.V1.FormattedValue', '') || safeGet(activity, 'ownerid@OData.Community.Display.V1.FormattedValue', '') || safeGet(activity, 'crad2_owner@OData.Community.Display.V1.FormattedValue', '');
+                const action = displayChoice(activity, CONFIG.tables.activity, 'crad2_status', '-');
+                const comment = displayValue(activity, 'new_comment', null, '-');
+                const delayReason = displayValue(activity, '_and_delayreason_value', null, '-');
+                const start = displayDateTime(activity, 'and_startdate', '-');
+                const pending = displayDateTime(activity, 'crda1_pendingdate', '-');
+                const stepNumber = index + 1;
+                const details = [
+                    ['Comment', comment],
+                    ['Delay Reason', delayReason],
+                    ['Start Date', start],
+                    ['Pending Date', pending]
+                ].filter(([, value]) => !isBlank(value) && value !== '-').map(([label, value]) => `<div class="step-detail"><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</div>`).join('');
+                return `
+                    <div class="step-card">
+                        <div class="step-index">${stepNumber}</div>
+                        <div>
+                            <div class="step-main-title">${escapeHtml(subject)}</div>
+                            <div class="step-main-sub">${escapeHtml(owner || 'No owner shown')}</div>
+                        </div>
+                        <div class="step-meta">
+                            <span class="status-badge ${getStatusClass(action, activity.crad2_status)}">${escapeHtml(action || '-')}</span>
+                            <span class="small">${escapeHtml(start || '-')}</span>
+                        </div>
+                        ${details ? `<div class="step-detail-grid">${details}</div>` : ''}
+                    </div>`;
+            }).join('');
+            detailsRow.innerHTML = `
+                <td colspan="32">
+                    <div class="steps-subgrid">
+                        <div class="steps-list">${rows}</div>
+                        <div class="steps-footer">Rows: ${activities.length}</div>
+                    </div>
+                </td>`;
+        }
+
+        async function openPatientWorkspace(record) { State.selectedPatient = record; switchTab('patientPanel'); $id('patientHeader').textContent = `${record[CONFIG.fields.patientName] || ''} - ${record[CONFIG.fields.name] || ''}`; renderPatientSummary(record); const patientId = record[CONFIG.fields.id] || record[CONFIG.fields.id.toLowerCase()]; await Promise.all([loadPatientActivities(patientId), loadDischargeAlerts(patientId)]); }
+
+        function renderPatientSummary(rec) {
+            const el = $id('patientSummary');
+            el.innerHTML = '';
+            const p = getPatientDisplayData(rec);
+            const patientName = p.patientName || 'Patient';
+            const ref = p.reference || p.visitId || '';
+            const rows = [
+                ['Discharge Reference', p.reference],
+                ['Patient ID', p.patientId],
+                ['Patient Code', p.patientCode],
+                ['Visit ID', p.visitId],
+                ['Created Date', p.createdDate],
+                ['Admission Date', p.admissionDate],
+                ['Room', p.room],
+                ['Bed', p.bed],
+                ['Floor', p.floor],
+                ['Nurse Station', p.nurseStation],
+                ['Physician', p.physician],
+                ['Admission Doctor', p.admissionDoctor],
+                ['Specialty', p.specialty],
+                ['Owner', safeGet(rec, '_ownerid_value@OData.Community.Display.V1.FormattedValue', '') || safeGet(rec, 'ownerid@OData.Community.Display.V1.FormattedValue', '')],
+                ['Gender', p.gender],
+                ['Discharge Type', p.dischargeType],
+                ['Early Flag', p.earlyFlag],
+                ['Current Step', p.currentStep],
+                ['Pending On', p.pendingOn],
+                ['Status', p.status],
+                ['Delayed', p.delayed],
+                ['Physical Discharge TAT', p.tat]
+            ];
+            const title = document.createElement('div');
+            title.className = 'summary-title';
+            title.innerHTML = `<div class="summary-name">${escapeHtml(patientName)}</div><div class="summary-ref">${escapeHtml(ref)}</div>`;
+            el.appendChild(title);
+            rows.forEach(([k, v]) => {
+                const d = document.createElement('div');
+                d.className = 'summary-row';
+                d.innerHTML = `<div class="summary-label">${escapeHtml(k)}</div><div class="summary-value">${escapeHtml(isBlank(v) ? '-' : v)}</div>`;
+                el.appendChild(d);
+            });
+        }
+
+        async function loadPatientActivities(patientId) { const actEl = $id('activityTimeline'); actEl.innerHTML = '<div class="small">Loading activities...</div>'; try { const acts = await DataverseService.getActivities(patientId); const items = safeGet(acts, 'value', []); State.activities = items; renderActivityTimeline(items); renderCurrentActivity(items); updateLastUpdated(); } catch (e) { actEl.innerHTML = '<div class="small">Unable to load activities.</div>'; } }
+
+        async function loadDischargeAlerts(patientId) {
+            const el = $id('dischargeAlerts');
+            if (!el) return;
+            el.innerHTML = '<div class="small">Loading discharge alerts...</div>';
+            try {
+                const response = await DataverseService.getDischargeAlerts(patientId);
+                renderDischargeAlerts(safeGet(response, 'value', []));
+            } catch (e) {
+                console.error('Unable to load discharge alerts', e);
+                renderDischargeAlertsUnavailable(e);
+            }
+        }
+
+        async function refreshPatientWorkspace({ forceDataset = false } = {}) {
+            if (!State.selectedPatient) return;
+            const patientId = State.selectedPatient[CONFIG.fields.id];
+            try {
+                const snapshot = await captureDischargeWorkflowState(patientId);
+                applyDischargeWorkflowState(snapshot);
+                await loadDischargeAlerts(patientId);
+                if (forceDataset) State.patientsLoaded = false;
+            } catch (e) {
+                console.error('Unable to refresh discharge workspace', e);
+                showAppMessage('Refresh failed', 'Unable to refresh the complete discharge state.', 'error');
+            }
+        }
+
+        function renderDischargeAlerts(rows) {
+            const el = $id('dischargeAlerts');
+            if (!el) return;
+            const patient = getPatientDisplayData(State.selectedPatient || {});
+            const body = rows.length ? `
+                <div class="draft-existing">
+                    <table class="worklist-table">
+                        <thead><tr><th>Alert</th><th>Comment</th><th>Created On</th><th>Created By</th><th>Status / Severity</th><th>Patient Name</th><th>Patient ID</th></tr></thead>
+                        <tbody>${rows.map(row => {
+                            const schema = DataverseService._alertSchema || {};
+                            const title = schema.title ? displayValue(row, schema.title, null, '') : '';
+                            const comment = schema.comment ? displayValue(row, schema.comment, null, '') : '';
+                            const createdOn = displayDateTime(row, 'createdon', '');
+                            const createdBy = displayValue(row, '_createdby_value', null, '');
+                            const status = schema.status ? displayValue(row, schema.status, null, '') : '';
+                            const severity = schema.severity ? displayValue(row, schema.severity, null, '') : '';
+                            const statusText = [status, severity].filter(Boolean).join(' / ');
+                            return `<tr><td>${escapeHtml(title || 'Discharge Alert')}</td><td>${escapeHtml(comment || '-')}</td><td>${escapeHtml(createdOn || '-')}</td><td>${escapeHtml(createdBy || '-')}</td><td>${escapeHtml(statusText || '-')}</td><td>${escapeHtml(row.__patientName || patient.patientName || '-')}</td><td>${escapeHtml(row.__patientId || patient.patientId || '-')}</td></tr>`;
+                        }).join('')}</tbody>
+                    </table>
+                </div>` : '<div class="subgrid-empty">We did not find anything to show here.</div>';
+            el.innerHTML = `
+                <div class="subgrid-head">
+                    <div class="subgrid-title">Discharge Alerts</div>
+                    <div class="subgrid-actions">
+                        <button id="refreshDischargeAlerts" type="button">Refresh</button>
+                        <button id="openDischargeAlertForm" type="button">Open Form</button>
+                        <button id="newDischargeAlertBtn" class="btn-primary" type="button">+ Add Alert</button>
+                    </div>
+                </div>
+                ${body}
+                <div class="small" style="margin-top:10px">Rows: ${rows.length}</div>
+            `;
+            const btn = $id('newDischargeAlertBtn');
+            if (btn) btn.addEventListener('click', openDischargeAlertCreateModal);
+            const refresh = $id('refreshDischargeAlerts');
+            if (refresh && State.selectedPatient) refresh.addEventListener('click', () => loadDischargeAlerts(State.selectedPatient[CONFIG.fields.id]));
+            const openForm = $id('openDischargeAlertForm');
+            if (openForm) openForm.addEventListener('click', () => openDischargeAlertModelDrivenForm({ quickCreate: true }));
+        }
+
+        function renderDischargeAlertsUnavailable(err) {
+            const el = $id('dischargeAlerts');
+            if (!el) return;
+            el.innerHTML = `
+                <div class="subgrid-head">
+                    <div class="subgrid-title">Discharge Alerts</div>
+                    <div class="subgrid-actions"><button id="retryDischargeAlerts" type="button">Retry</button><button id="copyAlertDiagnostics" type="button">Copy diagnostics</button></div>
+                </div>
+                <div class="subgrid-empty">Unable to load Discharge Alerts.</div>
+            `;
+            const retry = $id('retryDischargeAlerts');
+            if (retry && State.selectedPatient) retry.addEventListener('click', () => loadDischargeAlerts(State.selectedPatient[CONFIG.fields.id]));
+            const copy = $id('copyAlertDiagnostics');
+            if (copy) copy.addEventListener('click', () => {
+                const payload = window.__lastDataverseError || { message: err ? err.message : 'Unable to load Discharge Alerts' };
+                try {
+                    navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+                    copy.textContent = 'Copied';
+                    setTimeout(() => copy.textContent = 'Copy diagnostics', 2000);
+                } catch (e) {
+                    showAppMessage('Diagnostics unavailable', 'Unable to copy diagnostics in this browser context.', 'error');
+                }
+            });
+        }
+
+
+        function renderActivityTimeline(items) {
+            const el = $id('activityTimeline'); el.innerHTML = '<div class="panel-label">Workflow Timeline</div>';
+            if (!items.length) { el.innerHTML += '<div class="empty-state">No discharge activities found.</div>'; return; }
+            const wrapper = document.createElement('div'); wrapper.className = 'timeline-steps';
+            const currentId = (items.find(i => !choiceEquals(i.crad2_status, CONFIG.choices.activityAction.cleared)) || {}).crad2_dischargeactivityid;
+            items.forEach(a => {
+                const node = document.createElement('div');
+                const isCompleted = choiceEquals(a.crad2_status, CONFIG.choices.activityAction.cleared);
+                const isCurrent = a.crad2_dischargeactivityid === currentId;
+                const isDelayed = isTruthyChoice(displayValue(a, 'and_isdelayed', null, ''));
+                let nodeClass = 'timeline-node node-pending';
+                if (isCompleted) nodeClass = 'timeline-node node-completed';
+                else if (isCurrent) nodeClass = 'timeline-node node-current';
+                else if (isDelayed) nodeClass = 'timeline-node node-delayed';
+                node.className = nodeClass;
+                const subject = displayValue(a, 'crad2_subject', null, '');
+                const stage = displayChoice(a, CONFIG.tables.activity, 'crad2_statge', '');
+                const owner = safeGet(a,'_ownerid_value@OData.Community.Display.V1.FormattedValue','') || safeGet(a,'ownerid@OData.Community.Display.V1.FormattedValue','') || safeGet(a,'crad2_owner@OData.Community.Display.V1.FormattedValue','');
+                const action = displayChoice(a, CONFIG.tables.activity, 'crad2_status', '');
+                const start = a.and_startdate || '';
+                const tat = a.and_tat || a.and_activityclearancetatmins || '';
+                node.innerHTML = `<div class="node-dot"></div><div><div class="timeline-title">${escapeHtml(subject)}</div><div class="timeline-meta">${escapeHtml(stage)} | ${escapeHtml(owner)}</div><div class="timeline-meta">${escapeHtml(action)} | ${escapeHtml(start)} ${tat ? '| TAT: ' + escapeHtml(tat) + ' min' : ''}</div></div>`;
+                wrapper.appendChild(node);
+            });
+            el.appendChild(wrapper);
+        }
+
+        function renderCurrentActivity(items) {
+            const candidate = items.find(i => !choiceEquals(i.crad2_status, CONFIG.choices.activityAction.cleared)) || items[items.length - 1];
+            if (!candidate) { $id('currentActivity').innerHTML = '<div class="small">No current activity</div>'; return; }
+            const activity = candidate;
+            const el = $id('currentActivity');
+            el.innerHTML = '';
+            const statusLabel = displayChoice(activity, CONFIG.tables.activity, 'crad2_status', '');
+            const stageLabel = displayChoice(activity, CONFIG.tables.activity, 'crad2_statge', '');
+            const subject = displayValue(activity, 'crad2_subject', null, '');
+            const header = document.createElement('div'); header.className = 'activity-head'; header.innerHTML = `<div><div class="panel-label">Current Activity</div><div class="activity-title">${escapeHtml(subject)}</div><div class="small">${escapeHtml(stageLabel)}</div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><button id="openCurrentActivityRecord">Open Activity Form</button><div class="status-badge ${getStatusClass(statusLabel, activity.crad2_status)}">${escapeHtml(statusLabel || '-')}</div></div>`;
+            const activityOwner = safeGet(activity,'_ownerid_value@OData.Community.Display.V1.FormattedValue','') || safeGet(activity,'ownerid@OData.Community.Display.V1.FormattedValue','') || safeGet(activity,'crad2_owner@OData.Community.Display.V1.FormattedValue','');
+            const meta = document.createElement('div'); meta.className = 'activity-meta'; meta.innerHTML = `<span>Owner: ${escapeHtml(activityOwner || '-')}</span><span>Started: ${escapeHtml(activity.and_startdate || '-')}</span>`;
+            el.appendChild(header); el.appendChild(meta);
+            const openActivityRecord = $id('openCurrentActivityRecord');
+            if (openActivityRecord) openActivityRecord.addEventListener('click', () => openModelDrivenForm(CONFIG.tables.activity, activity.crad2_dischargeactivityid));
+            renderActivityForm(activity);
+        }
+
+        function renderActivityForm(activity) {
+            const el = $id('activityForm');
+            el.innerHTML = '';
+            if (!activity) { el.innerHTML = '<div class="small">No activity selected.</div>'; return; }
+            const form = document.createElement('div');
+            form.className = 'activity-form-inner';
+            const normalized = normalizeSubject(activity.crad2_subject || '');
+            const activitySubject = displayValue(activity, 'crad2_subject', null, '');
+            const activityStage = displayChoice(activity, CONFIG.tables.activity, 'crad2_statge', '');
+            const isRequestInitiation = normalized.includes(CONFIG.subjectAliases.requestInitiation);
+            const isFinancialDischarge = normalized.includes(CONFIG.subjectAliases.financialDischarge);
+            const isPhysicalDischarge = normalized.includes(CONFIG.subjectAliases.physicalDischarge);
+            const needsDelayReason = isRequestInitiation || normalized.includes(CONFIG.subjectAliases.homeMedications);
+            form.innerHTML = `<div><div class="panel-label">Activity Update</div><div class="activity-title">${escapeHtml(activitySubject)}</div><div class="small">Stage: ${escapeHtml(activityStage)}</div></div>`;
+
+            const controls = {};
+            addReadOnlyField(form, 'Subject', activitySubject);
+            if (isRequestInitiation) {
+                const dischargeInstructionsField = !isBlank(activity.new_dischargeinstructionsss) ? 'new_dischargeinstructionsss' : 'new_dischargeinstructions';
+                const pharmacyReturnField = !isBlank(activity.crad2_pharmacyreturn) ? 'crad2_pharmacyreturn' : 'new_pharmacyreturn';
+                controls.dischargeInstructions = addYesNo12Field(form, 'Discharge Instructions', dischargeInstructionsField, null, true);
+                controls.pharmacyReturn = addYesNo12Field(form, 'Pharmacy Return', pharmacyReturnField, null, true);
+                controls.followUpDate = addDateField(form, 'Follow Up Date', 'new_followupdate', null);
+            }
+
+            controls.action = addActionField(form, null);
+            if (needsDelayReason) controls.delayReason = addDelayReasonLookupField(form, Object.assign({}, activity, { _and_delayreason_value: null }), true);
+
+            const physicalFields = [];
+            if (isPhysicalDischarge) {
+                physicalFields.push(addPhysicalQuestionField(form, 'Received the discharge summary?', 'and_didyoureceivethedischargesummary', null));
+                physicalFields.push(addPhysicalQuestionField(form, 'Received home medications?', 'and_didyoureceiveyourhomemedications', null));
+                physicalFields.push(addPhysicalQuestionField(form, 'Has a follow-up appointment?', 'and_doyouhaveafollowupappointment', null));
+            }
+
+            controls.comment = addTextAreaField(form, 'Comment', 'new_comment', activity.new_comment || '');
+            const fileInput = addAttachmentField(form, activity);
+            const forwardRow = addForwardTeamField(form);
+            addReadOnlyField(form, 'Owner', displayValue(activity, '_ownerid_value', null, '') || displayValue(activity, 'crad2_owner', null, ''));
+            addReadOnlyField(form, 'Previous Activity', displayValue(activity, '_crad2_previousactivity_value', null, '') || displayValue(activity, 'crad2_previousactivity', null, ''));
+
+            const actions = document.createElement('div');
+            actions.className = 'form-actions';
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn-primary';
+            saveBtn.textContent = 'Save Activity';
+            actions.appendChild(saveBtn);
+            form.appendChild(actions);
+
+            const syncConditionalFields = () => {
+                const action = parseInt(controls.action.value);
+                forwardRow.classList.toggle('hidden', action !== CONFIG.choices.activityAction.forwardToTeam);
+                physicalFields.forEach(row => row.classList.toggle('hidden', action !== CONFIG.choices.activityAction.cleared));
+            };
+            controls.action.addEventListener('change', syncConditionalFields);
+            syncConditionalFields();
+
+            saveBtn.addEventListener('click', async () => {
+                const action = parseInt(controls.action.value);
+                if (!action) { showAppMessage('Action required', 'Select an activity action before saving.', 'error'); return; }
+                if (needsDelayReason && !controls.delayReason.dataset.selectedDelayReasonId) { showAppMessage('Delay Reason required', 'Select a delay reason from the lookup before saving this activity.', 'error'); return; }
+                if (isRequestInitiation) {
+                    if (!controls.dischargeInstructions.value || !controls.pharmacyReturn.value) { showAppMessage('Required fields missing', 'Discharge Instructions and Pharmacy Return are required.', 'error'); return; }
+                }
+                if (action === CONFIG.choices.activityAction.cleared && isPhysicalDischarge) {
+                    const missingPhysical = physicalFields.some(row => !row.querySelector('select').value);
+                    if (missingPhysical) { showAppMessage('Confirmations required', 'All Physical Discharge confirmations are required before clearing.', 'error'); return; }
+                }
+
+                const payload = collectActivityPayload(form);
+                if (isRequestInitiation) {
+                    const dischargeInstructionsValue = controls.dischargeInstructions.value === 'true';
+                    const pharmacyReturnValue = controls.pharmacyReturn.value === 'true';
+                    const activityTypes = await DataverseService.getEntityAttributeTypes(CONFIG.tables.activity);
+                    applyTypedYesNoPayload(payload, ['new_dischargeinstructions', 'new_dischargeinstructionsss'], dischargeInstructionsValue, activityTypes);
+                    applyTypedYesNoPayload(payload, ['new_pharmacyreturn', 'crad2_pharmacyreturn'], pharmacyReturnValue, activityTypes);
+                }
+                payload.crad2_status = action;
+                if (action === CONFIG.choices.activityAction.cleared) payload[CONFIG.fields.actionDate] = new Date().toISOString();
+                if (action === CONFIG.choices.activityAction.forwardToTeam) {
+                    const selectedTeamId = forwardRow.dataset.selectedTeamId;
+                    if (!selectedTeamId) { showAppMessage('Team required', 'Please select a team to forward this activity to.', 'error'); return; }
+                    if (isPhysicalDischarge) applyPhysicalForwardDefaults(payload, activity);
+                    const teamBinding = await DataverseService.resolveActivityTeamBinding();
+                    payload[`${teamBinding}@odata.bind`] = `/teams(${selectedTeamId})`;
+                }
+
+                try {
+                    disable(saveBtn, true);
+                    const patientId = State.selectedPatient[CONFIG.fields.id];
+                    const beforeSave = await captureDischargeWorkflowState(patientId);
+                    console.debug('Activity being saved', {
+                        activityId: activity.crad2_dischargeactivityid,
+                        subject: activitySubject,
+                        oldAction: activity.crad2_status,
+                        newAction: action,
+                        delayReasonId: controls.delayReason ? controls.delayReason.dataset.selectedDelayReasonId : '',
+                        payload,
+                        activityCountBefore: safeGet(beforeSave, 'activities.length', 0),
+                        currentStepBefore: beforeSave.parent ? beforeSave.parent[CONFIG.fields.currentStep] : null
+                    });
+                    await DataverseService.updateActivityWithLookups(activity.crad2_dischargeactivityid, payload, { delayReasonId: controls.delayReason ? controls.delayReason.dataset.selectedDelayReasonId : '' });
+                    console.debug('PATCH success', activity.crad2_dischargeactivityid);
+                    delete State.activityCache[normalizeGuid(patientId)];
+                    State.patientsLoaded = false;
+                    State.dashboardPatientsLoaded = false;
+                    showUpdatingWorkflow();
+                    await delay(500);
+                    const baseline = await captureDischargeWorkflowState(patientId);
+                    console.debug('Polling started', {
+                        activityCountAfterPatch: safeGet(baseline, 'activities.length', 0),
+                        currentStepAfterPatch: baseline.parent ? baseline.parent[CONFIG.fields.currentStep] : null
+                    });
+                    applyDischargeWorkflowState(baseline);
+                    const changedDuringSave = workflowSignal(beforeSave, activity.crad2_dischargeactivityid) !== workflowSignal(baseline, activity.crad2_dischargeactivityid);
+                    if (changedDuringSave) $id('modalRoot').innerHTML = '';
+                    else {
+                        const result = await pollDischargeWorkflow(patientId, baseline, { targetActivityId: activity.crad2_dischargeactivityid });
+                        applyDischargeWorkflowState(result.snapshot);
+                        console.debug('Polling finished', {
+                            changed: result.changed,
+                            activityCountAfterPolling: safeGet(result.snapshot, 'activities.length', 0),
+                            currentStepAfterPolling: result.snapshot && result.snapshot.parent ? result.snapshot.parent[CONFIG.fields.currentStep] : null
+                        });
+                        if (result.changed) $id('modalRoot').innerHTML = '';
+                        else showWorkflowStillProcessing();
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showAppMessage('Save failed', 'Unable to save activity.', 'error');
+                } finally {
+                    disable(saveBtn, false);
+                }
+            });
+
+            fileInput.addEventListener('change', async () => {
+                const f = fileInput.files[0];
+                if (!f) return;
+                try { delete State.activityCache[normalizeGuid(State.selectedPatient[CONFIG.fields.id])]; await DataverseService.uploadActivityFile(activity.crad2_dischargeactivityid, f); showAppMessage('File uploaded', 'The attachment was uploaded successfully.', 'success'); await loadPatientActivities(State.selectedPatient[CONFIG.fields.id]); }
+                catch (e) { console.error(e); showAppMessage('Upload failed', 'File upload failed.', 'error'); }
+            });
+
+            const teamInput = forwardRow.querySelector('input');
+            const teamResults = forwardRow.querySelector('.team-results');
+            const teamWrap = forwardRow.querySelector('.lookup-wrap');
+            const closeTeamResults = () => teamResults.classList.add('hidden');
+            const setTeamResultsState = (message) => {
+                teamResults.innerHTML = `<div class="lookup-state">${escapeHtml(message)}</div>`;
+                teamResults.classList.remove('hidden');
+            };
+            const renderTeamResults = (teams) => {
+                teamResults.innerHTML = teams.map(t => `<div class="lookup-result" data-id="${escapeHtml(t.teamid)}"><span class="lookup-result-icon">+</span><span class="lookup-result-label">${escapeHtml(t.name)}</span></div>`).join('') || '<div class="lookup-state">No teams</div>';
+                teamResults.classList.remove('hidden');
+                teamResults.querySelectorAll('.lookup-result').forEach(node => node.addEventListener('click', () => {
+                    forwardRow.dataset.selectedTeamId = node.dataset.id;
+                    teamInput.value = node.querySelector('.lookup-result-label').textContent;
+                    closeTeamResults();
+                }));
+            };
+            const loadTeamResults = async (q) => {
+                setTeamResultsState('Searching...');
+                try {
+                    const r = await DataverseService.searchTeams(q);
+                    renderTeamResults(safeGet(r, 'value', []));
+                } catch (e) {
+                    console.error('Team search failed', e);
+                    setTeamResultsState('Team search failed');
+                }
+            };
+            const debouncedTeamLoad = debounce((q) => loadTeamResults(q), 350);
+            teamInput.addEventListener('input', (e) => {
+                forwardRow.dataset.selectedTeamId = '';
+                debouncedTeamLoad(e.target.value.trim());
+            });
+            teamInput.addEventListener('focus', () => loadTeamResults(teamInput.value.trim()));
+            teamInput.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                loadTeamResults(teamInput.value.trim());
+            });
+            document.addEventListener('click', (event) => {
+                if (!teamWrap.contains(event.target)) closeTeamResults();
+            });
+
+            el.appendChild(form);
+        }
+
+        function addFieldShell(form, labelText, required = false) {
+            const row = document.createElement('div');
+            row.className = 'form-row';
+            const label = document.createElement('div');
+            label.className = 'label';
+            label.textContent = required ? `${labelText} *` : labelText;
+            row.appendChild(label);
+            form.appendChild(row);
+            return row;
+        }
+
+        function addReadOnlyField(form, labelText, value) {
+            const row = addFieldShell(form, labelText);
+            const input = document.createElement('input');
+            input.value = isBlank(value) ? '-' : value;
+            input.disabled = true;
+            row.appendChild(input);
+            return input;
+        }
+
+        function addChoiceField(form, labelText, field, value, choices, required = false) {
+            const row = addFieldShell(form, labelText, required);
+            const select = document.createElement('select');
+            select.name = field;
+            select.dataset.field = field;
+            select.dataset.type = 'number';
+            select.innerHTML = '<option value="">---</option>' + Object.entries(choices).map(([key, label]) => `<option value="${escapeHtml(key)}">${escapeHtml(label)}</option>`).join('');
+            if (!isBlank(value)) select.value = String(value);
+            row.appendChild(select);
+            return select;
+        }
+
+        function addYesNo12Field(form, labelText, field, value, required = false) {
+            if (isBooleanActivityField(field)) return addBooleanYesNoField(form, labelText, field, value, required);
+            return addChoiceField(form, labelText, field, value, CHOICE_MAPS.yesNo12, required);
+        }
+
+        function applyTypedYesNoPayload(payload, fields, isYes, typeMap) {
+            fields.forEach(field => {
+                delete payload[field];
+                const type = String(typeMap[field] || '').toLowerCase();
+                if (!type) return;
+                if (type === 'boolean') payload[field] = !!isYes;
+                else payload[field] = isYes ? 1 : 2;
+            });
+        }
+
+        function isBooleanActivityField(field) {
+            return ['new_dischargeinstructions', 'new_dischargeinstructionsss', 'new_pharmacyreturn', 'crad2_pharmacyreturn', 'new_homemedications', 'crad2_homemedications'].includes(field);
+        }
+
+        function addBooleanYesNoField(form, labelText, field, value, required = false) {
+            const row = addFieldShell(form, labelText, required);
+            const select = document.createElement('select');
+            select.name = field;
+            select.dataset.field = field;
+            select.dataset.type = 'boolean';
+            select.innerHTML = '<option value="">---</option><option value="true">Yes</option><option value="false">No</option>';
+            if (!isBlank(value)) {
+                if (value === false || String(value).trim().toLowerCase() === 'false' || String(value) === '2' || String(value) === '0') select.value = 'false';
+                else select.value = 'true';
+            }
+            row.appendChild(select);
+            return select;
+        }
+
+        function addPhysicalQuestionField(form, labelText, field, value) {
+            const row = addFieldShell(form, labelText, true);
+            const select = document.createElement('select');
+            select.name = field;
+            select.dataset.field = field;
+            select.dataset.type = 'number';
+            select.innerHTML = `<option value="">--Select--</option><option value="${CONFIG.choices.yesNoNotDone.yes}">Yes</option><option value="${CONFIG.choices.yesNoNotDone.no}">No</option><option value="${CONFIG.choices.yesNoNotDone.notDone}">Not Done</option>`;
+            if (!isBlank(value)) select.value = String(value);
+            row.appendChild(select);
+            return row;
+        }
+
+        function addActionField(form, value) {
+            return addChoiceField(form, 'Action', 'crad2_status', value, CHOICE_MAPS.activityAction, true);
+        }
+
+        function addDateField(form, labelText, field, value) {
+            const row = addFieldShell(form, labelText);
+            const input = document.createElement('input');
+            input.type = 'date';
+            input.name = field;
+            input.dataset.field = field;
+            input.dataset.type = 'date';
+            if (!isBlank(value)) input.value = String(value).slice(0, 10);
+            row.appendChild(input);
+            return input;
+        }
+
+        function addTextField(form, labelText, field, value, required = false) {
+            const row = addFieldShell(form, labelText, required);
+            const input = document.createElement('input');
+            input.name = field;
+            input.dataset.field = field;
+            input.value = isBlank(value) ? '' : value;
+            row.appendChild(input);
+            return input;
+        }
+
+        function addDelayReasonLookupField(form, activity, required = false) {
+            const row = addFieldShell(form, 'Delay Reason', required);
+            row.dataset.selectedDelayReasonId = normalizeGuid(activity._and_delayreason_value) || '';
+            const wrap = document.createElement('div');
+            wrap.className = 'lookup-wrap';
+            const inputWrap = document.createElement('div');
+            inputWrap.className = 'lookup-input-wrap';
+            const input = document.createElement('input');
+            input.placeholder = 'Look for Delay Reason';
+            input.value = row.dataset.selectedDelayReasonId ? displayValue(activity, '_and_delayreason_value', null, '') : '';
+            const icon = document.createElement('span');
+            icon.className = 'lookup-icon';
+            icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>';
+            const results = document.createElement('div');
+            results.className = 'lookup-results delay-reason-results hidden';
+            inputWrap.appendChild(input);
+            inputWrap.appendChild(icon);
+            wrap.appendChild(inputWrap);
+            wrap.appendChild(results);
+            row.appendChild(wrap);
+
+            const closeResults = () => results.classList.add('hidden');
+            const setResultsState = (message) => {
+                results.innerHTML = `<div class="lookup-state">${escapeHtml(message)}</div>`;
+                results.classList.remove('hidden');
+            };
+            const renderResults = (rows) => {
+                const f = CONFIG.delayReasonFields;
+                const idFields = f.idAliases || [f.id];
+                const nameFields = f.nameAliases || [f.name];
+                const html = rows.map(item => {
+                    const id = firstRawValue(item, idFields, '');
+                    const label = firstDisplayValue(item, nameFields, id || '');
+                    if (!id) return '';
+                    return `<div class="lookup-result" data-id="${escapeHtml(id)}"><span class="lookup-result-icon">+</span><span class="lookup-result-label">${escapeHtml(label)}</span></div>`;
+                }).join('');
+                results.innerHTML = html || '<div class="lookup-state">No delay reasons</div>';
+                results.classList.remove('hidden');
+                results.querySelectorAll('.lookup-result').forEach(node => {
+                    node.addEventListener('click', () => {
+                        row.dataset.selectedDelayReasonId = node.dataset.id;
+                        input.value = node.querySelector('.lookup-result-label').textContent;
+                        closeResults();
+                    });
+                });
+            };
+            const loadResults = async (query) => {
+                setResultsState('Searching...');
+                try {
+                    const response = await DataverseService.searchDelayReasons(query);
+                    renderResults(safeGet(response, 'value', []));
+                } catch (err) {
+                    console.error('Delay reason search failed', err);
+                    setResultsState('Delay reason search failed');
+                }
+            };
+            const debouncedLoadResults = debounce((query) => loadResults(query), 350);
+
+            input.addEventListener('input', (event) => {
+                row.dataset.selectedDelayReasonId = '';
+                debouncedLoadResults(event.target.value.trim());
+            });
+            input.addEventListener('focus', () => loadResults(input.value.trim()));
+            input.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                loadResults(input.value.trim());
+            });
+            document.addEventListener('click', (event) => {
+                if (!wrap.contains(event.target)) closeResults();
+            });
+
+            row.lookupInput = input;
+            return row;
+        }
+
+        function addTextAreaField(form, labelText, field, value) {
+            const row = addFieldShell(form, labelText);
+            const textarea = document.createElement('textarea');
+            textarea.rows = 3;
+            textarea.name = field;
+            textarea.dataset.field = field;
+            textarea.value = isBlank(value) ? '' : value;
+            row.appendChild(textarea);
+            return textarea;
+        }
+
+        function addAttachmentField(form, activity) {
+            const row = addFieldShell(form, 'Attachment');
+            const wrap = document.createElement('div');
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            wrap.appendChild(fileInput);
+            if (activity.new_attachment) {
+                const downloadBtn = document.createElement('button');
+                downloadBtn.type = 'button';
+                downloadBtn.textContent = 'Download';
+                downloadBtn.addEventListener('click', async () => {
+                    try {
+                        const blob = await DataverseService.downloadActivityFile(activity.crad2_dischargeactivityid);
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = activity.new_attachment || 'attachment';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    } catch (e) {
+                        showAppMessage('Download failed', 'Unable to download the attachment.', 'error');
+                    }
+                });
+                wrap.appendChild(downloadBtn);
+            }
+            row.appendChild(wrap);
+            return fileInput;
+        }
+
+        function addForwardTeamField(form) {
+            const row = addFieldShell(form, 'Forward To', true);
+            row.classList.add('hidden');
+            row.dataset.selectedTeamId = '';
+            const wrap = document.createElement('div');
+            wrap.className = 'lookup-wrap';
+            const inputWrap = document.createElement('div');
+            inputWrap.className = 'lookup-input-wrap';
+            const input = document.createElement('input');
+            input.placeholder = 'Search team to forward...';
+            const icon = document.createElement('span');
+            icon.className = 'lookup-icon';
+            icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>';
+            const results = document.createElement('div');
+            results.className = 'lookup-results team-results hidden';
+            inputWrap.appendChild(input);
+            inputWrap.appendChild(icon);
+            wrap.appendChild(inputWrap);
+            wrap.appendChild(results);
+            row.appendChild(wrap);
+            return row;
+        }
+
+        function openDischargeAlertCreateModal() {
+            if (!State.selectedPatient) return;
+            const modalRoot = $id('modalRoot');
+            const patient = getPatientDisplayData(State.selectedPatient);
+            modalRoot.innerHTML = `
+                <div class="modal-backdrop"></div>
+                <aside class="quick-create-modal" role="dialog" aria-modal="true" aria-label="Quick Create Discharge Alert">
+                    <div class="quick-create-head">
+                        <div class="quick-create-title">Quick Create: Discharge Alert</div>
+                        <button id="closeAlertCreate" class="icon-btn" type="button" aria-label="Close">x</button>
+                    </div>
+                    <div class="quick-create-body">
+                        <div class="form-row">
+                            <div class="label">Patient *</div>
+                            <div class="lookup-pill"><span>+</span><span>${escapeHtml(patient.patientName || patient.reference || 'Selected patient')}</span></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="label">Comment *</div>
+                            <textarea id="alertComment" rows="7" placeholder="Enter alert comment"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button id="cancelAlertCreate" type="button">Cancel</button>
+                            <button id="saveAlertCreate" class="btn-primary" type="button">Save Alert</button>
+                        </div>
+                    </div>
+                </aside>
+            `;
+            const close = () => { modalRoot.innerHTML = ''; };
+            $id('closeAlertCreate').addEventListener('click', close);
+            $id('cancelAlertCreate').addEventListener('click', close);
+            $id('saveAlertCreate').addEventListener('click', async () => {
+                const saveBtn = $id('saveAlertCreate');
+                const comment = $id('alertComment').value.trim();
+                if (!comment) { showAppMessage('Comment required', 'Enter a Discharge Alert comment before saving.', 'error'); return; }
+                try {
+                    disable(saveBtn, true);
+                    const patientId = State.selectedPatient[CONFIG.fields.id];
+                    await DataverseService.createDischargeAlert(patientId, comment);
+                    close();
+                    await loadDischargeAlerts(patientId);
+                    showAppMessage('Discharge alert saved', 'The alert was added to this patient discharge.', 'success');
+                } catch (err) {
+                    console.error('Unable to create discharge alert', err);
+                    close();
+                    showAppMessage('Unable to save alert', 'Dataverse rejected the in-app alert row. Opening the existing Discharge Alert form is the safe fallback when required columns are different.', 'error');
+                    setTimeout(() => openDischargeAlertModelDrivenForm({ quickCreate: true }), 300);
+                } finally {
+                    disable(saveBtn, false);
+                }
+            });
+        }
+
+        function applyPhysicalForwardDefaults(payload, activity) {
+            ['and_didyoureceivethedischargesummary', 'and_didyoureceiveyourhomemedications', 'and_doyouhaveafollowupappointment'].forEach(field => {
+                if (!isBlank(payload[field]) || !isBlank(activity[field])) return;
+                payload[field] = CONFIG.choices.yesNoNotDone.notDone;
+            });
+        }
+
+        function collectActivityPayload(form) {
+            const payload = {};
+            form.querySelectorAll('[data-field]').forEach(control => {
+                const field = control.dataset.field;
+                if (!field || field === 'crad2_status' || isBlank(control.value)) return;
+                if (control.dataset.type === 'number') payload[field] = parseInt(control.value);
+                else if (control.dataset.type === 'boolean') payload[field] = control.value === 'true';
+                else payload[field] = control.value;
+            });
+            return payload;
+        }
+
+        function renderYesNoSelect(name, value) { const div = document.createElement('div'); div.className = 'form-row'; const label = document.createElement('div'); label.className = 'label'; label.textContent = name.replace(/^and_/, '').replace(/([a-z])([A-Z])/g, '$1 $2'); const select = document.createElement('select'); select.name = name; select.innerHTML = `<option value="">Select</option><option value="${CONFIG.choices.yesNoNotDone.yes}">Yes</option><option value="${CONFIG.choices.yesNoNotDone.no}">No</option><option value="${CONFIG.choices.yesNoNotDone.notDone}">Not Done</option>`; if (value !== undefined && value !== null) select.value = value; div.appendChild(label); div.appendChild(select); return div; }
+
+        async function captureDischargeWorkflowState(patientId) {
+            const [parent, activitiesResp] = await Promise.all([
+                DataverseService.getPatientDischarge(patientId),
+                DataverseService.getActivities(patientId)
+            ]);
+            return { parent, activities: safeGet(activitiesResp, 'value', []) };
+        }
+
+        function applyDischargeWorkflowState(snapshot) {
+            if (!snapshot || !snapshot.parent) return;
+            State.selectedPatient = snapshot.parent;
+            State.activities = snapshot.activities || [];
+            $id('patientHeader').textContent = `${snapshot.parent[CONFIG.fields.patientName] || ''} - ${snapshot.parent[CONFIG.fields.name] || ''}`;
+            renderPatientSummary(snapshot.parent);
+            renderActivityTimeline(State.activities);
+            renderCurrentActivity(State.activities);
+            updateLastUpdated();
+        }
+
+        async function pollDischargeWorkflow(patientId, baselineSnapshot, { intervalMs = CONFIG.polling.intervalMs, timeoutMs = CONFIG.polling.timeoutMs, targetActivityId = null } = {}) {
+            const start = Date.now();
+            const baselineSignal = workflowSignal(baselineSnapshot, targetActivityId);
+            let latest = baselineSnapshot;
+            while (Date.now() - start < timeoutMs) {
+                await delay(intervalMs);
+                try {
+                    latest = await captureDischargeWorkflowState(patientId);
+                    if (workflowSignal(latest, targetActivityId) !== baselineSignal) {
+                        return { changed: true, snapshot: latest };
+                    }
+                } catch (e) {
+                    console.error('workflow poll error', e);
+                }
+            }
+            return { changed: false, snapshot: latest };
+        }
+
+        function showUpdatingWorkflow() {
+            const modalRoot = $id('modalRoot');
+            modalRoot.innerHTML = `<div class="modal-backdrop"></div><div class="modal"><div><div class="activity-title">Updating discharge workflow...</div><div class="small" style="margin-top:6px">Waiting for the existing Power Automate workflow to process the saved activity.</div></div></div>`;
+        }
+
+        function showWorkflowStillProcessing() {
+            const modalRoot = $id('modalRoot');
+            modalRoot.innerHTML = `<div class="modal-backdrop"></div><div class="modal"><div><div class="activity-title">Activity saved. Workflow update is still processing.</div><div class="small" style="margin-top:6px">Refresh the discharge after a moment to check for the next activity.</div><div class="form-actions" style="margin-top:16px"><button id="refreshWorkflowNow" class="btn-primary">Refresh</button><button id="closeWorkflowMessage">Close</button></div></div></div>`;
+            const refresh = $id('refreshWorkflowNow');
+            if (refresh) refresh.addEventListener('click', async () => {
+                if (!State.selectedPatient) return;
+                modalRoot.innerHTML = '';
+                await refreshPatientWorkspace({ forceDataset: true });
+            });
+            const close = $id('closeWorkflowMessage');
+            if (close) close.addEventListener('click', () => { modalRoot.innerHTML = ''; });
+        }
+
+        function disable(btn, val) { btn.disabled = val; }
+        function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
+        function debounce(fn, wait) { let t; return function (...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); }; }
+
+        async function renderEarlyDischarge() {
+            const header = $id('earlyDraftHeader');
+            const controls = $id('earlyControls');
+            const list = $id('earlyList');
+            header.innerHTML = '<div class="small">Loading early discharge drafts...</div>';
+            controls.innerHTML = '';
+            list.innerHTML = '';
+            try {
+                const resp = await DataverseService.getEarlyDischarges({ top: 100 });
+                const drafts = safeGet(resp, 'value', []);
+
+                if (!drafts.length) {
+                    header.innerHTML = '<div class="small">No Early Discharge drafts are available.</div>';
+                    return;
+                }
+
+                const ef = CONFIG.earlyFields;
+                header.innerHTML = `<div class="activity-head"><div><div class="activity-title">Active Early Discharges</div></div><div class="small">Rows: ${drafts.length}</div></div>`;
+                controls.innerHTML = '';
+
+                const table = document.createElement('table');
+                table.className = 'worklist-table';
+                const thead = document.createElement('thead');
+                thead.innerHTML = `<tr><th>Discharge Date</th><th>Status</th><th>Count Of Patients</th><th>Submission Date</th><th>Submitted By</th></tr>`;
+                table.appendChild(thead);
+                const tbody = document.createElement('tbody');
+                drafts.forEach(draft => {
+                    const tr = document.createElement('tr');
+                    const dischargeDate = firstDisplayDateTime(draft, [ef.dischargeDate, ef.alternateDate, ef.createdOn], '-');
+                    const status = displayChoice(draft, CONFIG.tables.early, ef.status, '-');
+                    const count = firstDisplayValue(draft, [ef.countOfPatients], '0');
+                    const submissionDate = firstDisplayDateTime(draft, [ef.submissionDate], '-');
+                    const submittedBy = displayValue(draft, ef.submittedBy, null, '-');
+                    tr.innerHTML = `<td>${escapeHtml(dischargeDate)}</td><td><span class="status-badge ${getStatusClass(status, draft[ef.status])}">${escapeHtml(status)}</span></td><td>${escapeHtml(count)}</td><td>${escapeHtml(submissionDate)}</td><td>${escapeHtml(submittedBy)}</td>`;
+                    tr.addEventListener('click', () => openEarlyDraftWorkspace(draft));
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                list.innerHTML = '';
+                list.appendChild(table);
+                const rowCount = document.createElement('div');
+                rowCount.className = 'small';
+                rowCount.style.padding = '12px 16px';
+                rowCount.textContent = `Rows: ${drafts.length}`;
+                list.appendChild(rowCount);
+
+            } catch (e) {
+                console.error('Early Discharge load failed', e);
+                header.innerHTML = '<div class="small">Unable to load early discharge drafts.</div><div style="margin-top:8px"><button id="retryEarly" class="btn-primary small">Retry</button></div>';
+                setTimeout(() => { const btn = $id('retryEarly'); if (btn) btn.addEventListener('click', () => renderEarlyDischarge()); }, 100);
+            }
+        }
+
+        function getEarlyDraftDisplayData(draft) {
+            const ef = CONFIG.earlyFields;
+            return {
+                id: draft[ef.id],
+                dischargeDate: firstDisplayDateTime(draft, [ef.dischargeDate, ef.alternateDate, ef.createdOn], '-'),
+                status: displayChoice(draft, CONFIG.tables.early, ef.status, '-'),
+                count: firstDisplayValue(draft, [ef.countOfPatients], '0'),
+                submissionDate: firstDisplayDateTime(draft, [ef.submissionDate], '-'),
+                submittedBy: displayValue(draft, ef.submittedBy, null, '-'),
+                createdDate: displayDateTime(draft, ef.createdOn, '-')
+            };
+        }
+
+        function openEarlyDraftWorkspace(draft) {
+            State.selectedEarlyDraft = draft;
+            switchTab('earlyPanel');
+            renderEarlyDraftWorkspace(draft);
+        }
+
+        function getInpatientDisplayData(row) {
+            const f = CONFIG.inpatientFields;
+            return {
+                id: row[f.id],
+                patientCode: displayValue(row, f.name, null, ''),
+                patientId: displayValue(row, f.patientId, null, '') || displayValue(row, f.name, null, ''),
+                patientName: displayValue(row, f.patientName, null, ''),
+                visitId: displayValue(row, f.visitId, null, ''),
+                room: displayValue(row, f.room, null, ''),
+                bed: displayValue(row, f.bed, null, ''),
+                nurseStation: firstDisplayValue(row, CONFIG.inpatientAliases.nurseStation, ''),
+                physician: displayValue(row, f.physician, null, ''),
+                admissionDoctor: firstDisplayValue(row, CONFIG.inpatientAliases.admissionDoctor, ''),
+                specialty: displayValue(row, f.specialty, null, ''),
+                admissionDate: displayDateTime(row, f.admissionDate, '')
+            };
+        }
+
+        function getEarlyPatientDisplayData(row) {
+            const f = CONFIG.earlyIpdFields;
+            const inpatient = row.__inpatient ? getInpatientDisplayData(row.__inpatient) : {};
+            const childName = displayValue(row, f.name, null, '');
+            const dateLikeName = /^\d{4}-\d{2}-\d{2}$/.test(childName);
+            return {
+                id: row[f.id],
+                dischargeType: displayChoice(row, CONFIG.tables.earlyIpd, f.dischargeType, ''),
+                patientCode: inpatient.patientCode || firstDisplayValue(row, [f.patientCodeValue], '') || (dateLikeName ? '' : childName),
+                patientName: inpatient.patientName || '',
+                visitId: displayValue(row, f.visitId, null, '') || inpatient.visitId || '',
+                room: inpatient.room || '',
+                bed: inpatient.bed || '',
+                nurseStation: inpatient.nurseStation || '',
+                physician: inpatient.physician || '',
+                admissionDoctor: inpatient.admissionDoctor || '',
+                specialty: inpatient.specialty || '',
+                admissionDate: inpatient.admissionDate || '',
+                cancellationReason: displayValue(row, f.cancellationReason, null, ''),
+                isSubmitted: displayValue(row, f.isSubmitted, null, '')
+            };
+        }
+
+        function buildEarlyPatientPayload(inpatient, dischargeType) {
+            const src = getInpatientDisplayData(inpatient);
+            const f = CONFIG.earlyIpdFields;
+            const patientCode = src.patientCode || src.patientId || src.patientName;
+            const payload = {};
+            payload[f.dischargeType] = Number(dischargeType);
+            if (!isBlank(patientCode)) payload[f.name] = patientCode;
+            if (!isBlank(src.visitId)) payload[f.visitId] = src.visitId;
+            if (!isBlank(src.id)) payload.__inpatientId = src.id;
+            return payload;
+        }
+
+        function isDuplicateDataverseError(err) {
+            const body = ((err && err.body) || (err && err.message) || '').toString().toLowerCase();
+            return body.includes('duplicate') || body.includes('already') || body.includes('unique') || body.includes('cannot insert');
+        }
+
+        async function renderEarlyDraftWorkspace(draft) {
+            const d = getEarlyDraftDisplayData(draft);
+            $id('earlyHeader').textContent = `Early Discharge Draft - ${d.dischargeDate}`;
+
+            const summary = $id('earlySummary');
+            summary.innerHTML = '';
+            const isSubmitted = String(d.status).toLowerCase().includes('submit') || choiceEquals(draft[CONFIG.earlyFields.status], 1);
+            summary.innerHTML = `
+                <div class="early-overview-title">
+                    <div class="summary-name">Early Discharge Draft</div>
+                    <div class="summary-ref">${escapeHtml(d.dischargeDate)}</div>
+                </div>
+                <div class="early-metric"><div class="summary-label">Status</div><div class="summary-value"><span class="status-badge ${getStatusClass(d.status, draft[CONFIG.earlyFields.status])}">${escapeHtml(d.status)}</span></div></div>
+                <div class="early-metric"><div class="summary-label">Patients</div><div id="earlyPatientCount" class="summary-value">${escapeHtml(d.count)}</div></div>
+                <div class="early-metric"><div class="summary-label">Created</div><div class="summary-value">${escapeHtml(d.createdDate)}</div></div>
+                <div class="early-metric"><div class="summary-label">Submission</div><div class="summary-value">${escapeHtml(d.submissionDate)}</div></div>
+                <div class="early-metric"><div class="summary-label">Submitted By</div><div class="summary-value">${escapeHtml(d.submittedBy)}</div></div>
+                <div class="early-submit-area"><button id="submitEarlyDraft" class="btn-submit" ${isSubmitted ? 'disabled' : ''}>Submit Draft</button></div>`;
+            $id('earlyCurrent').innerHTML = `
+                <div class="early-panel-head"><div><div class="panel-label">Add Patient</div><div class="early-panel-title">Draft Entry</div></div><div class="status-badge ${getStatusClass(d.status, draft[CONFIG.earlyFields.status])}">${escapeHtml(d.status)}</div></div>
+                <div class="draft-form">
+                    <div class="form-row"><div class="label">Discharge Type</div><select id="earlyDischargeType" ${isSubmitted ? 'disabled' : ''}><option value="">Select type</option><option value="1">Early</option><option value="2">Planned</option></select></div>
+                    <div class="form-row"><div class="label">Patient Search</div><input id="earlyPatientSearch" placeholder="Search inpatient by patient code or name" disabled /></div>
+                    <div id="earlyPatientResults" class="draft-patient-list"><div class="small">${isSubmitted ? 'Submitted drafts are read-only.' : 'Select a discharge type to enable patient search.'}</div></div>
+                    <div id="earlySelectedPatient" class="small"></div>
+                    <div class="form-actions"><button id="addEarlyPatient" class="btn-primary" disabled>Add Patient</button></div>
+                </div>`;
+            $id('earlyDraftDetails').innerHTML = `<div class="early-panel-head"><div><div class="panel-label">Patients In Draft</div><div class="early-panel-title">Draft Patient List</div></div><div id="earlyRecordedCount" class="small">${escapeHtml(d.count)} recorded</div></div><div id="earlyDraftPatients" class="draft-existing"><div class="small">Loading patients...</div></div>`;
+            await renderEarlyDraftPatients(d.id);
+            bindEarlyDraftForm(draft, isSubmitted);
+        }
+
+        async function renderEarlyDraftPatients(parentId) {
+            const el = $id('earlyDraftPatients');
+            if (!el) return;
+            try {
+                const resp = await DataverseService.getEarlyDischargePatients(parentId);
+                const rows = safeGet(resp, 'value', []);
+                if (!rows.length) {
+                    el.innerHTML = '<div class="small">No patients have been added to this draft.</div>';
+                    State.earlyDraftPatients = [];
+                    await syncEarlyDraftCount(parentId, 0);
+                    return;
+                }
+                const hydratedRows = await Promise.all(rows.map(async row => {
+                    const inpatientId = row[CONFIG.earlyIpdFields.patientCodeValue];
+                    if (inpatientId) {
+                        try { row.__inpatient = await DataverseService.getInpatientById(inpatientId); }
+                        catch (e) { console.warn('Unable to hydrate inpatient row', inpatientId, e); }
+                    }
+                    return row;
+                }));
+                State.earlyDraftPatients = hydratedRows;
+                await syncEarlyDraftCount(parentId, hydratedRows.length);
+                el.innerHTML = `<table class="worklist-table"><thead><tr><th>Discharge Type</th><th>Patient Code</th><th>Patient Name</th><th>Visit ID</th><th>Room</th><th>Bed</th><th>Nurse Station</th><th>Physician</th><th>Admission Doctor</th><th>Specialty</th><th>Admission Date</th><th>Cancellation Reason</th><th>Submitted</th></tr></thead><tbody>${hydratedRows.map(row => {
+                    const p = getEarlyPatientDisplayData(row);
+                    return `<tr><td>${escapeHtml(p.dischargeType || '-')}</td><td>${escapeHtml(p.patientCode || '-')}</td><td class="patient-name-col"><div class="name">${escapeHtml(p.patientName || '-')}</div></td><td>${escapeHtml(p.visitId || '-')}</td><td>${escapeHtml(p.room || '-')}</td><td>${escapeHtml(p.bed || '-')}</td><td>${escapeHtml(p.nurseStation || '-')}</td><td>${escapeHtml(p.physician || '-')}</td><td>${escapeHtml(p.admissionDoctor || '-')}</td><td>${escapeHtml(p.specialty || '-')}</td><td>${escapeHtml(p.admissionDate || '-')}</td><td>${escapeHtml(p.cancellationReason || '-')}</td><td>${escapeHtml(p.isSubmitted || '-')}</td></tr>`;
+                }).join('')}</tbody></table>`;
+            } catch (e) {
+                console.error('Unable to load early discharge patient rows', e);
+                el.innerHTML = '<div class="small">Unable to load patients in this draft.</div>';
+            }
+        }
+
+        async function syncEarlyDraftCount(parentId, count) {
+            const countText = String(count);
+            const topCount = $id('earlyPatientCount');
+            const recordedCount = $id('earlyRecordedCount');
+            if (topCount) topCount.textContent = countText;
+            if (recordedCount) recordedCount.textContent = `${countText} recorded`;
+            if (State.selectedEarlyDraft && normalizeGuid(State.selectedEarlyDraft[CONFIG.earlyFields.id]) === normalizeGuid(parentId)) {
+                State.selectedEarlyDraft[CONFIG.earlyFields.countOfPatients] = count;
+            }
+            try {
+                await DataverseService.updateEarlyDischargeCount(parentId, count);
+            } catch (e) {
+                console.warn('Unable to sync Early Discharge patient count', e);
+            }
+        }
+
+        function renderInpatientResults(rows) {
+            const results = $id('earlyPatientResults');
+            const addBtn = $id('addEarlyPatient');
+            State.selectedInpatient = null;
+            if (addBtn) addBtn.disabled = true;
+            if (!results) return;
+            if (!rows.length) {
+                results.innerHTML = '<div class="small">No matching inpatients found.</div>';
+                return;
+            }
+            results.innerHTML = '';
+            rows.forEach(row => {
+                const p = getInpatientDisplayData(row);
+                const item = document.createElement('div');
+                item.className = 'patient-result';
+                item.innerHTML = `<div class="name">${escapeHtml(p.patientName || p.patientCode || '-')}</div><div class="meta">Patient ID: ${escapeHtml(p.patientId || '-')} | Visit: ${escapeHtml(p.visitId || '-')} | ${escapeHtml([p.room, p.bed].filter(Boolean).join(' / ') || '-')}</div>`;
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.patient-result.selected').forEach(node => node.classList.remove('selected'));
+                    item.classList.add('selected');
+                    State.selectedInpatient = row;
+                    $id('earlySelectedPatient').textContent = `${p.patientName || p.patientCode || 'Patient'} selected`;
+                    const dischargeType = $id('earlyDischargeType').value;
+                    if (addBtn) addBtn.disabled = !dischargeType;
+                });
+                results.appendChild(item);
+            });
+        }
+
+        function bindEarlyDraftForm(draft, isSubmitted) {
+            const typeSelect = $id('earlyDischargeType');
+            const search = $id('earlyPatientSearch');
+            const addBtn = $id('addEarlyPatient');
+            const submitBtn = $id('submitEarlyDraft');
+            if (!typeSelect || !search || !addBtn || !submitBtn) return;
+            State.selectedInpatient = null;
+            typeSelect.addEventListener('change', () => {
+                State.selectedInpatient = null;
+                addBtn.disabled = true;
+                search.disabled = isSubmitted || !typeSelect.value;
+                search.value = '';
+                $id('earlySelectedPatient').textContent = '';
+                $id('earlyPatientResults').innerHTML = typeSelect.value ? '<div class="small">Search inpatient list by patient code or name.</div>' : '<div class="small">Select a discharge type to enable patient search.</div>';
+            });
+            search.addEventListener('keyup', debounce(async () => {
+                if (!typeSelect.value || search.value.trim().length < 2) {
+                    renderInpatientResults([]);
+                    $id('earlyPatientResults').innerHTML = '<div class="small">Type at least 2 characters to search.</div>';
+                    return;
+                }
+                $id('earlyPatientResults').innerHTML = '<div class="small">Searching inpatients...</div>';
+                try {
+                    const resp = await DataverseService.searchInpatients(search.value.trim());
+                    renderInpatientResults(safeGet(resp, 'value', []));
+                } catch (e) {
+                    console.error('Inpatient search failed', e);
+                    $id('earlyPatientResults').innerHTML = '<div class="small">Unable to search inpatient list.</div>';
+                }
+            }, 350));
+            addBtn.addEventListener('click', async () => {
+                if (!typeSelect.value || !State.selectedInpatient) return;
+                const payload = buildEarlyPatientPayload(State.selectedInpatient, typeSelect.value);
+                if (isBlank(payload.__inpatientId)) {
+                    showAppMessage('Patient code required', 'The selected inpatient row does not include a valid inpatient-list record id for the Patient Code lookup.', 'error');
+                    return;
+                }
+                const existingRows = State.earlyDraftPatients || [];
+                const duplicate = existingRows.some(row => normalizeGuid(row[CONFIG.earlyIpdFields.patientCodeValue]) === normalizeGuid(payload.__inpatientId));
+                if (duplicate) {
+                    showAppMessage('Duplicate patient', 'This patient is already added to this Early Discharge draft.', 'error');
+                    return;
+                }
+                addBtn.disabled = true;
+                addBtn.textContent = 'Adding...';
+                try {
+                    await DataverseService.addEarlyDischargePatient(draft[CONFIG.earlyFields.id], payload);
+                    showAppMessage('Patient added', 'The inpatient row was added to this Early Discharge draft.', 'success');
+                    State.selectedInpatient = null;
+                    search.value = '';
+                    $id('earlySelectedPatient').textContent = '';
+                    $id('earlyPatientResults').innerHTML = '<div class="small">Search inpatient list by patient code or name.</div>';
+                    await renderEarlyDraftPatients(draft[CONFIG.earlyFields.id]);
+                } catch (e) {
+                    console.error('Add early discharge patient failed', e);
+                    if (isDuplicateDataverseError(e)) showAppMessage('Duplicate patient', 'This patient is already added to this Early Discharge draft.', 'error');
+                    else showAppMessage('Unable to add patient', 'Dataverse rejected the Early Discharge patient row. Use Copy diagnostics for the exact column message.', 'error');
+                } finally {
+                    addBtn.textContent = 'Add Patient';
+                    addBtn.disabled = !State.selectedInpatient;
+                }
+            });
+            submitBtn.addEventListener('click', async () => {
+                if (isSubmitted) return;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+                try {
+                    await DataverseService.submitEarlyDischarge(draft[CONFIG.earlyFields.id], { [CONFIG.earlyFields.status]: 1 });
+                    showAppMessage('Draft submitted', 'The Early Discharge draft status was updated.', 'success');
+                    await renderEarlyDischarge();
+                    switchTab('early');
+                } catch (e) {
+                    console.error('Submit early discharge draft failed', e);
+                    showAppMessage('Unable to submit draft', 'Dataverse rejected the draft status update.', 'error');
+                } finally {
+                    submitBtn.textContent = 'Submit Draft';
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { init().catch(e => console.error(e)); });
+        window.PatientDischargeApp = { CONFIG, DataverseService, State };
+    })();
+    </script>
+</body>
+</html>

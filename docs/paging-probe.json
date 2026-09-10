@@ -1,0 +1,26 @@
+[
+  {
+    "prefer": "odata.maxpagesize=5000",
+    "status": 200,
+    "rows": 5000,
+    "hasNext": true,
+    "applied": "odata.maxpagesize=5000",
+    "elapsedMs": 872
+  },
+  {
+    "prefer": "odata.maxpagesize=5000,odata.include-annotations=*",
+    "status": 200,
+    "rows": 5000,
+    "hasNext": true,
+    "applied": "odata.include-annotations=\"*\", odata.maxpagesize=5000",
+    "elapsedMs": 435
+  },
+  {
+    "prefer": "odata.maxpagesize=5000,odata.include-annotations=\"OData.Community.Display.V1.FormattedValue\"",
+    "status": 200,
+    "rows": 5000,
+    "hasNext": true,
+    "applied": "odata.include-annotations=\"OData.Community.Display.V1.FormattedValue\", odata.maxpagesize=5000",
+    "elapsedMs": 469
+  }
+]

@@ -1,0 +1,65 @@
+export const CHOICE_MAPS = {
+  patientDischargeStatus: {
+    408520000: "Pending",
+    408520001: "In Progress",
+    408520002: "Completed",
+    749510001: "Cancelled",
+    749510002: "Missed",
+  },
+  pendingOn: {
+    408520000: "Nursing",
+    408520001: "Pharmacy & Billing",
+    408520002: "Front Office",
+    408520003: "Nursing (Physical Discharge)",
+    408520004: "House Keeping",
+  },
+  gender: { 100000000: "Male", 100000001: "Female" },
+  earlyDischargeFlag: { 1: "Yes", 0: "No", true: "Yes", false: "No" },
+  earlyDischargeStatus: { 0: "Draft", 1: "Submitted" },
+  dischargeType: { 1: "Early", 2: "Planned" },
+  activityAction: {
+    100000000: "Pending",
+    408520000: "Cleared",
+    2: "Forward To Team",
+  },
+  billingAction: { 1: "Cleared", 2: "Forward To Team" },
+  billingStatus: { 408520000: "Cleared", 408520001: "Not Cleared" },
+  pharmacyStatus: { 408520000: "Cleared", 408520001: "Not Cleared" },
+  physicalDischargeQuestion: { 1: "Yes", 0: "No", 2: "Not Done" },
+  yesNo12: { 1: "Yes", 2: "No" },
+  stage: {
+    100000000: "Nursing Physical Discharge",
+    408520000: "Nursing",
+    408520001: "Inpatient Pharmacy",
+    408520002: "Outpatient Pharmacy",
+    408520003: "Billing",
+  },
+};
+
+export const FIELD_CHOICE_MAPS = {
+  "crad2_patientdischarge.crad2_status": "patientDischargeStatus",
+  "crad2_patientdischarge.crad2_pendingon": "pendingOn",
+  "crad2_patientdischarge.crad2_gender": "gender",
+  "crad2_patientdischarge.and_earlyflag": "earlyDischargeFlag",
+  "crad2_patientdischarge.and_dischargetype": "dischargeType",
+  "crad2_dischargeactivity.crad2_status": "activityAction",
+  "crad2_dischargeactivity.crad2_statge": "stage",
+  "crad2_dischargeactivity.new_billingaction": "billingAction",
+  "crad2_dischargeactivity.crad2_billingstatus": "billingStatus",
+  "crad2_dischargeactivity.crad2_pharmacystatus": "pharmacyStatus",
+  "crad2_dischargeactivity.and_didyoureceivethedischargesummary":
+    "physicalDischargeQuestion",
+  "crad2_dischargeactivity.and_didyoureceiveyourhomemedications":
+    "physicalDischargeQuestion",
+  "crad2_dischargeactivity.and_doyouhaveafollowupappointment":
+    "physicalDischargeQuestion",
+  "crad2_dischargeactivity.new_dischargeinstructions": "yesNo12",
+  "crad2_dischargeactivity.new_dischargeinstructionsss": "yesNo12",
+  "crad2_dischargeactivity.new_pharmacyreturn": "yesNo12",
+  "crad2_dischargeactivity.crad2_pharmacyreturn": "yesNo12",
+  "crad2_dischargeactivity.new_homemedications": "yesNo12",
+  "crad2_dischargeactivity.crad2_homemedications": "yesNo12",
+  "and_earlydischarge.and_statusnew": "earlyDischargeStatus",
+  "and_earlydischarge_ipdvisits.and_dischargetype": "dischargeType",
+  "and_earlydischarge_ipdvisits.and_earlyflag": "earlyDischargeFlag",
+};
