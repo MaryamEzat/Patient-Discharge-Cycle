@@ -624,12 +624,20 @@ button:disabled {
   user-select: none;
 }
 
-.worklist table, .worklist-table {
+.worklist table {
   min-width: 4900px;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
+}
+
+.worklist-table {
+  min-width: 100%;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
 }
 
 .worklist th, .worklist td, .worklist-table th, .worklist-table td {

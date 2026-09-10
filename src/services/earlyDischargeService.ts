@@ -37,11 +37,15 @@ export const earlyDischargeService = {
     });
     try {
       const children = await allPages(Children.getAll.bind(Children), {
-        select: ["and_earlydischarge_ipdvisitsid", "_and_earlydischarge_value"],
+        select: [
+          "and_earlydischarge_ipdvisitsid",
+          "_and_earlydischarge_value",
+          "_and_patientcode_value",
+        ],
       });
       const counts = new Map<string, number>();
       for (const child of children) {
-        if (child._and_earlydischarge_value) {
+        if (child._and_earlydischarge_value && child._and_patientcode_value) {
           const idKey = child._and_earlydischarge_value.toLowerCase();
           counts.set(idKey, (counts.get(idKey) || 0) + 1);
         }
@@ -70,8 +74,9 @@ export const earlyDischargeService = {
       filter: `_and_earlydischarge_value eq ${guid(id)}`,
       orderBy: ["createdon desc"],
     });
+    const validRows = rows.filter((r) => Boolean(r._and_patientcode_value));
     const cache = new Map<string, Promise<Inpatient>>();
-    for (const row of rows)
+    for (const row of validRows)
       if (row._and_patientcode_value && !cache.has(row._and_patientcode_value))
         cache.set(
           row._and_patientcode_value,
@@ -80,7 +85,7 @@ export const earlyDischargeService = {
           }).then((r) => unwrap(r, "Loading inpatient details")),
         );
     return Promise.all(
-      rows.map(async (r) => ({
+      validRows.map(async (r) => ({
         ...r,
         __inpatient: r._and_patientcode_value
           ? await cache.get(r._and_patientcode_value)
