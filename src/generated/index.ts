@@ -12,6 +12,7 @@ export * as And_whatsappnotificationsModel from './models/And_whatsappnotificati
 export * as CommonModels from './models/CommonModels';
 export * as Crad2_dischargeactivitiesModel from './models/Crad2_dischargeactivitiesModel';
 export * as Crad2_patientdischargesModel from './models/Crad2_patientdischargesModel';
+export * as MicrosoftDataverseModel from './models/MicrosoftDataverseModel';
 export * as SystemusersModel from './models/SystemusersModel';
 export * as TeamsModel from './models/TeamsModel';
 
@@ -23,5 +24,6 @@ export * from './services/And_inpatientlistsService';
 export * from './services/And_whatsappnotificationsService';
 export * from './services/Crad2_dischargeactivitiesService';
 export * from './services/Crad2_patientdischargesService';
+export * from './services/MicrosoftDataverseService';
 export * from './services/SystemusersService';
 export * from './services/TeamsService';

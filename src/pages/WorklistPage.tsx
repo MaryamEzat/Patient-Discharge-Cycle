@@ -84,7 +84,7 @@ export const columnWidths: Record<string, string> = {
   slaCategory: "140px",
 };
 
-const PAGE_SIZE = 40;
+const PAGE_SIZE = 15;
 
 function getPageNumbers(current: number, total: number): (number | string)[] {
   if (total <= 7) {
@@ -260,128 +260,218 @@ export function WorklistPage({
         <ErrorState error={error} retry={refresh} />
       ) : (
         <>
-          {visible.length > 0 && (
-            <div
-              className="worklist-top-scroll"
-              ref={topScrollRef}
-              onScroll={handleTopScroll}
-              title="Scroll table horizontally"
-            >
+          <div className="worklist-desktop-view">
+            {visible.length > 0 && (
               <div
-                className="worklist-top-scroll-inner"
-                style={{ width: `${scrollWidth}px` }}
-              />
+                className="worklist-top-scroll"
+                ref={topScrollRef}
+                onScroll={handleTopScroll}
+                title="Scroll table horizontally"
+              >
+                <div
+                  className="worklist-top-scroll-inner"
+                  style={{ width: `${scrollWidth}px` }}
+                />
+              </div>
+            )}
+            <div
+              className="worklist"
+              ref={worklistRef}
+              onScroll={handleWorklistScroll}
+            >
+              {!visible.length ? (
+                <div className="empty-state">No active discharge cases found.</div>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th className="expand-cell" style={{ width: "44px" }} />
+                      {worklistColumns.map(([title, key]) => (
+                        <th key={title} style={{ width: columnWidths[key], minWidth: columnWidths[key] }}>
+                          {title}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedRows.map((r) => {
+                      const p = getPatientDisplayData(r) as Record<string, string>;
+                      const id = r.crad2_patientdischargeid;
+                      const current = steps[id] && currentActivity(steps[id]);
+                      return (
+                        <Fragment key={id}>
+                          <tr
+                            className={truthy(p.delayed) ? "delayed" : ""}
+                            onClick={() => open(id)}
+                          >
+                            <td className="expand-cell">
+                              <button
+                                className="expand-btn"
+                                aria-label={
+                                  expanded.has(id)
+                                    ? "Hide discharge steps"
+                                    : "Show discharge steps"
+                                }
+                                aria-expanded={expanded.has(id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void toggle(id);
+                                }}
+                              >
+                                {expanded.has(id) ? "⌄" : "›"}
+                              </button>
+                            </td>
+                            {worklistColumns.map(([, key]) => {
+                              const val =
+                                key === "status"
+                                  ? p.status
+                                  : key === "patientName"
+                                    ? p.patientName
+                                    : key === "currentStep"
+                                      ? current?.crad2_subject || p.currentStep || "-"
+                                      : p[key] || "-";
+                              return (
+                                <td
+                                  key={key}
+                                  style={{
+                                    width: columnWidths[key],
+                                    minWidth: columnWidths[key],
+                                    maxWidth: columnWidths[key],
+                                  }}
+                                  className={
+                                    key === "patientName" ? "patient-cell" : "small"
+                                  }
+                                  title={val !== "-" ? String(val) : undefined}
+                                >
+                                  {key === "status" ? (
+                                    <StatusBadge label={p.status} />
+                                  ) : key === "patientName" ? (
+                                    <button
+                                      className="patient-link name"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        open(id);
+                                      }}
+                                    >
+                                      {p.patientName || "-"}
+                                    </button>
+                                  ) : (
+                                    val
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          {expanded.has(id) && (
+                            <tr className="steps-row">
+                              <td colSpan={32}>
+                                {stepErrors[id] ? (
+                                  <ErrorState error={stepErrors[id]} />
+                                ) : steps[id] ? (
+                                  <ActivityTimeline
+                                    activities={steps[id]}
+                                    compact
+                                  />
+                                ) : (
+                                  <LoadingState message="Loading steps..." />
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
-          )}
-          <div
-            className="worklist"
-            ref={worklistRef}
-            onScroll={handleWorklistScroll}
-          >
+          </div>
+
+          {/* Mobile Patient Cards View (Visible on <= 768px screens) */}
+          <div className="worklist-mobile-cards">
             {!visible.length ? (
               <div className="empty-state">No active discharge cases found.</div>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th className="expand-cell" style={{ width: "44px" }} />
-                    {worklistColumns.map(([title, key]) => (
-                      <th key={title} style={{ width: columnWidths[key], minWidth: columnWidths[key] }}>
-                        {title}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagedRows.map((r) => {
-                    const p = getPatientDisplayData(r) as Record<string, string>;
-                    const id = r.crad2_patientdischargeid;
-                    const current = steps[id] && currentActivity(steps[id]);
-                    return (
-                      <Fragment key={id}>
-                        <tr
-                          className={truthy(p.delayed) ? "delayed" : ""}
-                          onClick={() => open(id)}
-                        >
-                          <td className="expand-cell">
-                            <button
-                              className="expand-btn"
-                              aria-label={
-                                expanded.has(id)
-                                  ? "Hide discharge steps"
-                                  : "Show discharge steps"
-                              }
-                              aria-expanded={expanded.has(id)}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                void toggle(id);
-                              }}
-                            >
-                              {expanded.has(id) ? "⌄" : "›"}
-                            </button>
-                          </td>
-                          {worklistColumns.map(([, key]) => {
-                            const val =
-                              key === "status"
-                                ? p.status
-                                : key === "patientName"
-                                  ? p.patientName
-                                  : key === "currentStep"
-                                    ? current?.crad2_subject || p.currentStep || "-"
-                                    : p[key] || "-";
-                            return (
-                              <td
-                                key={key}
-                                style={{
-                                  width: columnWidths[key],
-                                  minWidth: columnWidths[key],
-                                  maxWidth: columnWidths[key],
-                                }}
-                                className={
-                                  key === "patientName" ? "patient-cell" : "small"
-                                }
-                                title={val !== "-" ? String(val) : undefined}
-                              >
-                                {key === "status" ? (
-                                  <StatusBadge label={p.status} />
-                                ) : key === "patientName" ? (
-                                  <button
-                                    className="patient-link name"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      open(id);
-                                    }}
-                                  >
-                                    {p.patientName || "-"}
-                                  </button>
-                                ) : (
-                                  val
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                        {expanded.has(id) && (
-                          <tr className="steps-row">
-                            <td colSpan={32}>
-                              {stepErrors[id] ? (
-                                <ErrorState error={stepErrors[id]} />
-                              ) : steps[id] ? (
-                                <ActivityTimeline
-                                  activities={steps[id]}
-                                  compact
-                                />
-                              ) : (
-                                <LoadingState message="Loading steps..." />
-                              )}
-                            </td>
-                          </tr>
+              pagedRows.map((r) => {
+                const p = getPatientDisplayData(r) as Record<string, string>;
+                const id = r.crad2_patientdischargeid;
+                const current = steps[id] && currentActivity(steps[id]);
+                const isExpanded = expanded.has(id);
+                return (
+                  <div
+                    key={id}
+                    className={`mobile-patient-card ${truthy(p.delayed) ? "delayed" : ""}`}
+                    onClick={() => open(id)}
+                  >
+                    <div className="mobile-card-header">
+                      <div className="mobile-patient-info">
+                        <h3 className="mobile-patient-name">{p.patientName || "Unknown Patient"}</h3>
+                        <div className="mobile-patient-meta">
+                          {p.patientId && <span className="mobile-meta-tag">MRN: <strong>{p.patientId}</strong></span>}
+                          {p.visitId && <span className="mobile-meta-tag">Visit: <strong>{p.visitId}</strong></span>}
+                          {p.room && <span className="mobile-meta-tag">Rm: <strong>{p.room}</strong></span>}
+                        </div>
+                      </div>
+                      <StatusBadge label={p.status} />
+                    </div>
+
+                    <div className="mobile-card-body">
+                      <div className="mobile-card-row">
+                        <span className="mobile-card-label">Current Step:</span>
+                        <span className="mobile-card-value font-medium">{current?.crad2_subject || p.currentStep || "-"}</span>
+                      </div>
+                      {p.physician && (
+                        <div className="mobile-card-row">
+                          <span className="mobile-card-label">Physician:</span>
+                          <span className="mobile-card-value">{p.physician}</span>
+                        </div>
+                      )}
+                      {p.physicianDischargeDate && (
+                        <div className="mobile-card-row">
+                          <span className="mobile-card-label">Discharge Date:</span>
+                          <span className="mobile-card-value">{p.physicianDischargeDate}</span>
+                        </div>
+                      )}
+                      {p.dischargeType && (
+                        <div className="mobile-card-row">
+                          <span className="mobile-card-label">Type:</span>
+                          <span className="mobile-card-value">{p.dischargeType}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mobile-card-actions" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="btn-mobile-details"
+                        onClick={() => open(id)}
+                      >
+                        Open Full Record →
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-mobile-steps"
+                        onClick={() => void toggle(id)}
+                      >
+                        <span>{isExpanded ? "Hide Steps" : "Timeline Steps"}</span>
+                        <span className="step-icon">{isExpanded ? "▲" : "▼"}</span>
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mobile-card-expanded" onClick={(e) => e.stopPropagation()}>
+                        {stepErrors[id] ? (
+                          <ErrorState error={stepErrors[id]} />
+                        ) : steps[id] ? (
+                          <ActivityTimeline activities={steps[id]} compact />
+                        ) : (
+                          <LoadingState message="Loading steps..." />
                         )}
-                      </Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 
@@ -389,7 +479,7 @@ export function WorklistPage({
             <div className="pagination-bar">
               <div className="pagination-info">
                 Showing {startIndex + 1}–{endIndex} of {visible.length} records
-                <span className="pagination-badge">40 per page</span>
+                <span className="pagination-badge">15 per page</span>
               </div>
               <div className="pagination-controls">
                 <button

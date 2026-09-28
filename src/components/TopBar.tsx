@@ -16,56 +16,62 @@ export function TopBar({
     "Current user";
   return (
     <header className="top-context">
-      <div className="header-left">
-        <div className="subtitle">PATIENT DISCHARGE CYCLE</div>
-        <div className="brand">Patient Discharge Cycle</div>
+      <div className="top-context-main">
+        <div className="header-left">
+          <div className="subtitle">PATIENT DISCHARGE CYCLE</div>
+          <div className="brand">Patient Discharge Cycle</div>
+        </div>
+        <div className="header-right">
+          <button
+            className="icon-btn"
+            title="Refresh Data"
+            aria-label="Refresh Data"
+            onClick={refresh}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M23 4v6h-6" />
+              <path d="M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
+          <div className="user-inline">
+            <div className="avatar">
+              {name
+                .split(" ")
+                .map((s) => s[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase()}
+            </div>
+            <div className="small">{name}</div>
+          </div>
+        </div>
       </div>
       <div className="context-title">
-        <div className="context-chip">
+        <div className="context-chip context-chip-left">
           <span className="context-label">Business Unit</span>
           <span className="context-value">AHJ</span>
         </div>
-        <div className="context-chip">
+        <div className="context-chip context-chip-center">
           <span className="context-label">Updated</span>
           <span className="context-value last-updated">
-            {updated?.toLocaleTimeString() || "-"}
+            {updated ? updated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
         </div>
-        <div className="context-chip">
+        <div className="context-chip context-chip-right">
           <span className="context-label">Attention</span>
           <span className="context-value">
             {pending === undefined ? "Pending review" : `${pending} pending`}
           </span>
-        </div>
-      </div>
-      <div className="header-right">
-        <button
-          className="icon-btn"
-          title="Refresh"
-          aria-label="Refresh"
-          onClick={refresh}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M20 12a8 8 0 0 1-13.7 5.7M4 12A8 8 0 0 1 17.7 6.3M17 2v5h5M7 22v-5H2" />
-          </svg>
-        </button>
-        <div className="user-inline">
-          <div className="avatar">
-            {name
-              .split(" ")
-              .map((s) => s[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase()}
-          </div>
-          <div className="small">{name}</div>
         </div>
       </div>
     </header>

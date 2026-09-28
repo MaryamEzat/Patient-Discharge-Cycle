@@ -1,6 +1,7 @@
 import { getContext } from "@microsoft/power-apps/app";
 import { guid } from "../config/schema";
 import { OperationalError } from "./data";
+import { TARGET_DATAVERSE_ORG_URL } from "./dataverseAdapter";
 export const platformService = {
   context: getContext,
   async recordUrl(
@@ -8,8 +9,11 @@ export const platformService = {
     id?: string,
     defaults?: Record<string, string>,
   ) {
-    const context = await getContext();
-    const org = context.app.dataverseOrgUrl;
+    let org = TARGET_DATAVERSE_ORG_URL;
+    if (!org) {
+      const context = await getContext().catch(() => null);
+      org = context?.app?.dataverseOrgUrl || "";
+    }
     if (!org)
       throw new OperationalError(
         "The full record form is unavailable in this session.",

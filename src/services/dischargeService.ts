@@ -1,8 +1,8 @@
-import { Crad2_patientdischargesService as Generated } from "../generated/services/Crad2_patientdischargesService";
 import type { Crad2_patientdischarges } from "../generated/models/Crad2_patientdischargesModel";
 import { CONFIG } from "../config/reference";
 import { tables, selectFields, guid } from "../config/schema";
 import { allPages, escapeOData, unwrap } from "./data";
+import { getItemOrg, listRecordsOrg } from "./dataverseAdapter";
 import { getPatientDisplayData } from "../presentation/reference";
 import { dateKey } from "../presentation/format";
 
@@ -72,7 +72,7 @@ export const dischargeService = {
     const { startISO, endISO } = getLocalDateRangeISO(0);
     const filter = `createdon ge ${startISO} and createdon lt ${endISO}`;
     const rows = await allPages(
-      Generated.getAll.bind(Generated),
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
       { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
       signal,
       onProgress,
@@ -84,7 +84,7 @@ export const dischargeService = {
     const { startISO, endISO } = getLocalDateRangeISO(daysAgo);
     const filter = `createdon ge ${startISO} and createdon lt ${endISO}`;
     const rows = await allPages(
-      Generated.getAll.bind(Generated),
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
       { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
       signal,
       onProgress,
@@ -95,7 +95,7 @@ export const dischargeService = {
   async listOlderThan(beforeISO: string, signal?: AbortSignal, onProgress?: (loaded: number) => void) {
     const filter = `createdon lt ${beforeISO}`;
     const rows = await allPages(
-      Generated.getAll.bind(Generated),
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
       { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
       signal,
       onProgress,
@@ -108,7 +108,7 @@ export const dischargeService = {
     if (!range) return [];
     const filter = `createdon ge ${range.startISO} and createdon lt ${range.endISO}`;
     const rows = await allPages(
-      Generated.getAll.bind(Generated),
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
       { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
       signal,
     );
@@ -119,7 +119,7 @@ export const dischargeService = {
     if (!term.trim()) return [];
     const filter = buildSearchFilter(term);
     const rows = await allPages(
-      Generated.getAll.bind(Generated),
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
       { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
       signal,
     );
@@ -129,7 +129,7 @@ export const dischargeService = {
   async list(signal?: AbortSignal, onProgress?: (loaded: number) => void) {
     return (
       await allPages(
-        Generated.getAll.bind(Generated),
+        (opts) => listRecordsOrg<Patient>(tables.patient, opts),
         { select, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
         signal,
         onProgress,
@@ -140,7 +140,7 @@ export const dischargeService = {
   },
 
   async get(id: string) {
-    return unwrap(await Generated.get(guid(id), { select }), "Loading patient");
+    return unwrap(await getItemOrg<Patient>(tables.patient, guid(id), { select }), "Loading patient");
   },
 };
 

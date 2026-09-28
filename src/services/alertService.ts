@@ -1,10 +1,10 @@
-import { And_whatsappnotificationsService as Generated } from "../generated/services/And_whatsappnotificationsService";
-import type { And_whatsappnotificationsBase } from "../generated/models/And_whatsappnotificationsModel";
+import type { And_whatsappnotifications } from "../generated/models/And_whatsappnotificationsModel";
 import { attribute, binding, guid, tables } from "../config/schema";
 import { allPages, OperationalError, unwrap } from "./data";
+import { createRecordOrg, listRecordsOrg } from "./dataverseAdapter";
 export const alertService = {
   list(id: string) {
-    return allPages(Generated.getAll.bind(Generated), {
+    return allPages((opts) => listRecordsOrg<And_whatsappnotifications>(tables.alert, opts), {
       select: [
         "and_whatsappnotificationid",
         "and_id",
@@ -34,12 +34,7 @@ export const alertService = {
       ...binding(tables.alert, "and_patient", tables.patient, id),
     };
     unwrap(
-      await Generated.create(
-        payload as Omit<
-          And_whatsappnotificationsBase,
-          "and_whatsappnotificationid"
-        >,
-      ),
+      await createRecordOrg(tables.alert, payload as Record<string, unknown>),
       "Saving alert",
     );
   },

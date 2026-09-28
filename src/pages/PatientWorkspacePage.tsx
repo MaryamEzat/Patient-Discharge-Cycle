@@ -156,24 +156,32 @@ export function PatientWorkspacePage({
         </section>
       </div>
       {message && (
-        <Modal title={message} close={busy ? undefined : () => setMessage("")}>
-          <p className="small">
-            {busy
-              ? "Loading..."
-              : "Refresh the discharge to check its latest state."}
-          </p>
-          {!busy && (
-            <div className="form-actions">
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setMessage("");
-                  resource.refresh();
-                }}
-              >
-                Refresh
-              </button>
-              <button onClick={() => setMessage("")}>Close</button>
+        <Modal
+          title={busy ? "Updating Activity" : "Activity Saved"}
+          close={busy ? undefined : () => setMessage("")}
+        >
+          {busy ? (
+            <LoadingState
+              message={message}
+              subtitle="Writing updates to Dataverse and refreshing workflow status..."
+            />
+          ) : (
+            <div className="modal-result">
+              <p className="small" style={{ marginBottom: "16px" }}>{message}</p>
+              <div className="form-actions">
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    setMessage("");
+                    resource.refresh();
+                  }}
+                >
+                  Refresh View
+                </button>
+                <button className="btn-outline-modern" onClick={() => setMessage("")}>
+                  Close
+                </button>
+              </div>
             </div>
           )}
         </Modal>

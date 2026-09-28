@@ -98,11 +98,12 @@ export function ActivityPanel({
       const file = await activityService.download(
         activity.crad2_dischargeactivityid,
       );
-      const bytes = new Uint8Array(file.data);
+      const binary = atob(file.data || "");
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([bytes]));
       const a = document.createElement("a");
       a.href = url;
-      a.download = file.name || activity.new_attachment_name || "attachment";
+      a.download = file.fileName || activity.new_attachment_name || "attachment";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {

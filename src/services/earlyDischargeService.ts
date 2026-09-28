@@ -1,6 +1,3 @@
-import { And_earlydischargesService as Drafts } from "../generated/services/And_earlydischargesService";
-import { And_earlydischarge_ipdvisitsesService as Children } from "../generated/services/And_earlydischarge_ipdvisitsesService";
-import { And_inpatientlistsService as Inpatients } from "../generated/services/And_inpatientlistsService";
 import type { And_earlydischarges } from "../generated/models/And_earlydischargesModel";
 import type {
   And_earlydischarge_ipdvisitses,
@@ -10,6 +7,12 @@ import type { And_inpatientlists } from "../generated/models/And_inpatientlistsM
 import { CONFIG } from "../config/reference";
 import { binding, guid, selectFields, tables } from "../config/schema";
 import { allPages, escapeOData, OperationalError, unwrap } from "./data";
+import {
+  createRecordOrg,
+  getItemOrg,
+  listRecordsOrg,
+  updateRecordOrg,
+} from "./dataverseAdapter";
 export type Draft = And_earlydischarges;
 export type Inpatient = And_inpatientlists;
 export type EarlyPatient = And_earlydischarge_ipdvisitses & {
@@ -31,12 +34,12 @@ const inpatientSelect = selectFields(tables.inpatient, [
 export const isSubmitted = (draft: Draft) => draft.and_statusnew === 1;
 export const earlyDischargeService = {
   async list() {
-    const drafts = await allPages(Drafts.getAll.bind(Drafts), {
+    const drafts = await allPages((opts) => listRecordsOrg<Draft>(tables.early, opts), {
       select: draftSelect,
       orderBy: ["and_dischargedate desc"],
     });
     try {
-      const children = await allPages(Children.getAll.bind(Children), {
+      const children = await allPages((opts) => listRecordsOrg<And_earlydischarge_ipdvisitses>(tables.earlyChild, opts), {
         select: [
           "and_earlydischarge_ipdvisitsid",
           "_and_earlydischarge_value",
@@ -64,12 +67,12 @@ export const earlyDischargeService = {
   },
   async get(id: string) {
     return unwrap(
-      await Drafts.get(guid(id), { select: draftSelect }),
+      await getItemOrg<Draft>(tables.early, guid(id), { select: draftSelect }),
       "Loading draft",
     );
   },
   async children(id: string): Promise<EarlyPatient[]> {
-    const rows = await allPages(Children.getAll.bind(Children), {
+    const rows = await allPages((opts) => listRecordsOrg<And_earlydischarge_ipdvisitses>(tables.earlyChild, opts), {
       select: childSelect,
       filter: `_and_earlydischarge_value eq ${guid(id)}`,
       orderBy: ["createdon desc"],
@@ -80,7 +83,7 @@ export const earlyDischargeService = {
       if (row._and_patientcode_value && !cache.has(row._and_patientcode_value))
         cache.set(
           row._and_patientcode_value,
-          Inpatients.get(guid(row._and_patientcode_value), {
+          getItemOrg<Inpatient>(tables.inpatient, guid(row._and_patientcode_value), {
             select: inpatientSelect,
           }).then((r) => unwrap(r, "Loading inpatient details")),
         );
@@ -100,7 +103,7 @@ export const earlyDischargeService = {
       "and_visitid",
     ]);
     return unwrap(
-      await Inpatients.getAll({
+      await listRecordsOrg<Inpatient>(tables.inpatient, {
         select: inpatientSelect,
         filter: fields
           .map((f) => `contains(${f},'${escapeOData(query)}')`)
@@ -115,7 +118,7 @@ export const earlyDischargeService = {
       throw new OperationalError("Select Early or Planned first.");
     if (isSubmitted(await this.get(draft.and_earlydischargeid)))
       throw new OperationalError("This draft has already been submitted.");
-    const rows = await allPages(Children.getAll.bind(Children), {
+    const rows = await allPages((opts) => listRecordsOrg<And_earlydischarge_ipdvisitses>(tables.earlyChild, opts), {
       select: ["and_earlydischarge_ipdvisitsid", "_and_patientcode_value"],
       filter: `_and_earlydischarge_value eq ${guid(draft.and_earlydischargeid)}`,
     });
@@ -147,11 +150,9 @@ export const earlyDischargeService = {
       ),
     };
     try {
-      const result = await Children.create(
-        payload as Omit<
-          And_earlydischarge_ipdvisitsesBase,
-          "and_earlydischarge_ipdvisitsid"
-        >,
+      const result = await createRecordOrg(
+        tables.earlyChild,
+        payload as Record<string, unknown>,
       );
       if (
         !result.success &&
@@ -178,7 +179,7 @@ export const earlyDischargeService = {
   async submit(id: string) {
     if (isSubmitted(await this.get(id))) return;
     unwrap(
-      await Drafts.update(guid(id), { and_statusnew: 1 }),
+      await updateRecordOrg(tables.early, guid(id), { and_statusnew: 1 }),
       "Submitting draft",
     );
   },

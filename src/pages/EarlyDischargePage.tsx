@@ -15,7 +15,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { LoadingState } from "../components/LoadingState";
 import { ErrorState } from "../components/ErrorState";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 
 function getPageNumbers(current: number, total: number): (number | string)[] {
   if (total <= 7) {
@@ -134,7 +134,7 @@ export function EarlyDischargePage({
               <div className="pagination-bar" style={{ borderRadius: 0, borderLeft: 0, borderRight: 0, borderBottom: 0, marginTop: 0 }}>
                 <div className="pagination-info">
                   Showing {startIndex + 1}–{endIndex} of {drafts.length} drafts
-                  <span className="pagination-badge">20 per page</span>
+                  <span className="pagination-badge">15 per page</span>
                 </div>
                 <div className="pagination-controls">
                   <button

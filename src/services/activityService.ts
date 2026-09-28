@@ -1,10 +1,7 @@
-import { Crad2_dischargeactivitiesService as Generated } from "../generated/services/Crad2_dischargeactivitiesService";
 import type {
   Crad2_dischargeactivities,
   Crad2_dischargeactivitiesBase,
 } from "../generated/models/Crad2_dischargeactivitiesModel";
-import { TeamsService } from "../generated/services/TeamsService";
-import { And_delayreasonsesService } from "../generated/services/And_delayreasonsesService";
 import {
   attribute,
   binding,
@@ -18,6 +15,12 @@ import {
   tables,
 } from "../config/schema";
 import { allPages, escapeOData, OperationalError, unwrap } from "./data";
+import {
+  downloadFileOrg,
+  listRecordsOrg,
+  updateRecordOrg,
+  uploadFileOrg,
+} from "./dataverseAdapter";
 import { normalizeSubject } from "../presentation/format";
 export type Activity = Crad2_dischargeactivities;
 export interface LookupOption {
@@ -212,7 +215,7 @@ export function buildActivityPayload(
 export const activityService = {
   list(id: string, signal?: AbortSignal) {
     return allPages(
-      Generated.getAll.bind(Generated),
+      (opts) => listRecordsOrg<Activity>(tables.activity, opts),
       {
         select,
         filter: `_crad2_discharge_value eq ${guid(id)}`,
@@ -223,7 +226,8 @@ export const activityService = {
   },
   async save(activity: Activity, input: ActivityInput) {
     unwrap(
-      await Generated.update(
+      await updateRecordOrg(
+        tables.activity,
         guid(activity.crad2_dischargeactivityid),
         buildActivityPayload(activity, input),
       ),
@@ -232,21 +236,17 @@ export const activityService = {
   },
   async upload(id: string, file: File) {
     unwrap(
-      await Generated.upload(guid(id), "new_attachment", file),
+      await uploadFileOrg(tables.activity, guid(id), "new_attachment", file),
       "Uploading attachment",
     );
   },
   async download(id: string) {
-    const result = await Generated.downloadFile(guid(id), "new_attachment");
-    return {
-      data: unwrap(result, "Downloading attachment"),
-      name: result.fileName || "attachment",
-    };
+    return downloadFileOrg(tables.activity, guid(id), "new_attachment");
   },
 };
 export async function searchTeams(query: string): Promise<LookupOption[]> {
   const rows = unwrap(
-    await TeamsService.getAll({
+    await listRecordsOrg<Record<string, unknown>>(tables.team, {
       select: ["teamid", "name"],
       filter: query ? `contains(name,'${escapeOData(query)}')` : undefined,
       top: 20,
@@ -254,7 +254,7 @@ export async function searchTeams(query: string): Promise<LookupOption[]> {
     }),
     "Searching teams",
   );
-  return rows.map((r) => ({ id: r.teamid, name: r.name }));
+  return rows.map((r) => ({ id: String(r.teamid), name: String(r.name) }));
 }
 export async function searchDelayReasons(
   query: string,
@@ -262,7 +262,7 @@ export async function searchDelayReasons(
   const name = primaryName(tables.delay),
     id = primaryId(tables.delay);
   const rows = unwrap(
-    await And_delayreasonsesService.getAll({
+    await listRecordsOrg<Record<string, unknown>>(tables.delay, {
       select: [id, name],
       filter: query ? `contains(${name},'${escapeOData(query)}')` : undefined,
       top: 20,

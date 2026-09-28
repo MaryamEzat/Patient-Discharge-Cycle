@@ -208,8 +208,14 @@
 	    .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--paper);padding:0;border-radius:17px;box-shadow:var(--shadow-strong);z-index:1000;max-width:90%;width:680px;border:1px solid var(--line);overflow:hidden}
 	    .modal>div{padding:21px}
 	    .modal-backdrop{position:fixed;inset:0;background:rgba(13,28,20,.62);z-index:900}
+	    html,body,#app,.app-root{overflow-x:hidden!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important}
+	    .last-updated{display:inline-block!important;visibility:visible!important;opacity:1!important}
+	    .context-chip{flex:1 1 0px!important;min-width:0!important}
+	    .context-chip-left{text-align:left!important}
+	    .context-chip-center{text-align:center!important}
+	    .context-chip-right{text-align:right!important}
 	    @media (max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.patient-body,.patient-main,.early-draft-layout{grid-template-columns:1fr}.early-draft-overview{grid-template-columns:repeat(2,minmax(150px,1fr))}.early-overview-title{grid-column:1/-1}.early-add-panel{position:static}.patient-summary{position:static}.header-left{min-width:auto}.top-context{height:auto;min-height:68px;align-items:flex-start;padding:12px 16px;flex-wrap:wrap}.context-title{margin-left:0;width:100%;justify-content:space-between}.header-right{margin-left:auto}}
-	    @media (max-width:760px){.app-root{padding-left:0;padding-top:66px}.nav-rail{inset:0 0 auto 0;width:auto;height:66px;flex-direction:row;justify-content:flex-start}.main-nav{flex-direction:row;width:auto;margin-top:0}.tab-btn{width:44px;height:44px}.top-context{top:66px}.main{padding:18px 14px 32px}.toolbar input{min-width:100%}.kpi-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.patient-toolbar{align-items:flex-start;flex-direction:column}.worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:9px 10px}.steps-subgrid{margin:8px 10px 12px 44px}.step-card{grid-template-columns:28px minmax(180px,1fr)}.step-meta,.step-detail-grid{grid-column:2}.step-detail-grid{grid-template-columns:1fr}.last-updated{display:none}}
+	    @media (max-width:760px){.app-root{padding-left:0!important;padding-top:66px!important}.nav-rail{inset:0 0 auto 0;width:100%!important;height:66px;flex-direction:row;justify-content:space-between}.main-nav{flex-direction:row;width:auto;margin-top:0}.tab-btn{width:44px;height:44px}.top-context{top:auto;position:relative;padding:10px 12px;width:100%!important;box-sizing:border-box!important}.main{padding:12px 10px 32px!important;width:100%!important;box-sizing:border-box!important}.toolbar input,.toolbar select,.filter-card input,.filter-card select{min-width:100%!important;width:100%!important;box-sizing:border-box!important}.kpi-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.patient-toolbar{align-items:flex-start;flex-direction:column}.worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:9px 10px}.steps-subgrid{margin:8px 10px 12px 44px}.step-card{grid-template-columns:28px minmax(180px,1fr)}.step-meta,.step-detail-grid{grid-column:2}.step-detail-grid{grid-template-columns:1fr}.last-updated{display:inline-block!important;visibility:visible!important}.context-value{font-size:11px!important;white-space:nowrap!important;overflow:visible!important}}
     </style>
 </head>
 <body>
@@ -232,9 +238,9 @@
 	                <div class="brand">Patient Discharge / Hospital Operations</div>
 	            </div>
 	            <div class="context-title">
-	                <div class="context-chip"><span class="context-label">Business Unit</span><span class="context-value">AHJ</span></div>
-	                <div class="context-chip"><span class="context-label">Updated</span><span id="lastUpdated" class="context-value last-updated">-</span></div>
-	                <div class="context-chip"><span class="context-label">Attention</span><span id="attentionSummary" class="context-value">Pending review</span></div>
+	                <div class="context-chip context-chip-left"><span class="context-label">Business Unit</span><span class="context-value">AHJ</span></div>
+	                <div class="context-chip context-chip-center"><span class="context-label">Updated</span><span id="lastUpdated" class="context-value last-updated">-</span></div>
+	                <div class="context-chip context-chip-right"><span class="context-label">Attention</span><span id="attentionSummary" class="context-value">Pending review</span></div>
 	            </div>
 	            <div class="header-right">
 	                <button id="headerRefresh" class="icon-btn" title="Refresh" aria-label="Refresh">

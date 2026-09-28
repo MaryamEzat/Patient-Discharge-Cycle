@@ -1,66 +1,25 @@
 {
   "version": "1.0",
-  "appId": "ed94ff46-c50f-4a76-b1ca-83e25291bef8",
+  "appId": "fcc69cf3-ef1c-47ab-aeef-15fe765721a5",
   "appDisplayName": "Patient Discharge",
   "region": "prod",
   "appType": "CodeApp",
-  "environmentId": "c8248b45-2429-e200-8a28-7f838b087b5b",
+  "environmentId": "cd78a59b-e16f-e4aa-b0a1-8e450a70ed56",
   "description": "Patient Discharge Operations",
   "buildPath": "./dist",
   "buildEntryPoint": "index.html",
   "localAppUrl": "http://localhost:3000",
   "logoPath": "Default",
-  "connectionReferences": {},
-  "databaseReferences": {
-    "default.cds": {
-      "dataSources": {
-        "patientdischarges": {
-          "entitySetName": "crad2_patientdischarges",
-          "logicalName": "crad2_patientdischarge",
-          "isHidden": false
-        },
-        "dischargeactivities": {
-          "entitySetName": "crad2_dischargeactivities",
-          "logicalName": "crad2_dischargeactivity",
-          "isHidden": false
-        },
-        "earlydischarges": {
-          "entitySetName": "and_earlydischarges",
-          "logicalName": "and_earlydischarge",
-          "isHidden": false
-        },
-        "earlydischarge_ipdvisits": {
-          "entitySetName": "and_earlydischarge_ipdvisitses",
-          "logicalName": "and_earlydischarge_ipdvisits",
-          "isHidden": false
-        },
-        "inpatientlists": {
-          "entitySetName": "and_inpatientlists",
-          "logicalName": "and_inpatientlist",
-          "isHidden": false
-        },
-        "dischargealerts": {
-          "entitySetName": "and_whatsappnotifications",
-          "logicalName": "and_whatsappnotification",
-          "isHidden": false
-        },
-        "teams": {
-          "entitySetName": "teams",
-          "logicalName": "team",
-          "isHidden": false
-        },
-        "users": {
-          "entitySetName": "systemusers",
-          "logicalName": "systemuser",
-          "isHidden": false
-        },
-        "delayreasons": {
-          "entitySetName": "and_delayreasonses",
-          "logicalName": "and_delayreasons",
-          "isHidden": false
-        }
-      },
-      "environmentVariableName": ""
+  "connectionReferences": {
+    "f82df783-3f4c-4505-b527-fbe3e536e97b": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+      "displayName": "Microsoft Dataverse",
+      "dataSources": [
+        "commondataserviceforapps"
+      ],
+      "authenticationType": "Oauth",
+      "dataSets": {}
     }
-  }
+  },
+  "databaseReferences": {}
 }

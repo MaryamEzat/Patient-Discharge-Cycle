@@ -13,7 +13,7 @@ export default function App() {
   const [patientId, setPatientId] = useState("");
   const [draftId, setDraftId] = useState("");
   const [revision, setRevision] = useState(0);
-  const [updated, setUpdated] = useState<Date>();
+  const [updated, setUpdated] = useState<Date>(() => new Date());
   const [worklistDirty, setWorklistDirty] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     search: "",
