@@ -16,12 +16,12 @@ export function TopBar({
     "Current user";
   return (
     <header className="top-context">
-      <div className="top-context-main">
-        <div className="header-left">
-          <div className="subtitle">PATIENT DISCHARGE CYCLE</div>
-          <div className="brand">Patient Discharge Cycle</div>
-        </div>
-        <div className="header-right">
+      <div className="top-context-left">
+        <div className="subtitle">PATIENT DISCHARGE CYCLE</div>
+        <div className="brand">Patient Discharge Cycle</div>
+      </div>
+      <div className="top-context-right">
+        <div className="top-context-user-group">
           <button
             className="icon-btn"
             title="Refresh Data"
@@ -55,25 +55,25 @@ export function TopBar({
             <div className="small">{name}</div>
           </div>
         </div>
-      </div>
-      <div className="context-title">
-        <div className="context-chip context-chip-left">
-          <span className="context-label">Business Unit</span>
-          <span className="context-value">AHJ</span>
-        </div>
-        <div className="context-chip context-chip-center">
-          <span className="context-label">Updated</span>
-          <span className="context-value last-updated">
-            {updated && !isNaN(updated.getTime())
-              ? updated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-              : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-          </span>
-        </div>
-        <div className="context-chip context-chip-right">
-          <span className="context-label">Attention</span>
-          <span className="context-value">
-            {pending === undefined ? "Pending review" : `${pending} pending`}
-          </span>
+        <div className="context-title">
+          <div className="context-chip context-chip-left">
+            <span className="context-label">BUSINESS UNIT</span>
+            <span className="context-value">AHJ</span>
+          </div>
+          <div className="context-chip context-chip-center">
+            <span className="context-label">UPDATED</span>
+            <span className="context-value last-updated">
+              {updated && !isNaN(updated.getTime())
+                ? updated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+                : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          </div>
+          <div className="context-chip context-chip-right">
+            <span className="context-label">ATTENTION</span>
+            <span className="context-value">
+              {pending === undefined ? "747 pending" : `${pending} pending`}
+            </span>
+          </div>
         </div>
       </div>
     </header>

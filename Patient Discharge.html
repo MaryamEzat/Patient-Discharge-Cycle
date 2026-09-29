@@ -33,47 +33,45 @@
 	    button{min-height:36px}
 	    .hidden{display:none!important}
 	    .app-root{min-height:100vh;padding-left:70px}
-	    .nav-rail{position:fixed;inset:0 auto 0 0;width:70px;background:var(--green);display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px 10px;z-index:80;box-shadow:8px 0 26px rgba(24,51,41,.12)}
+	    .nav-rail{position:fixed;inset:0 auto 0 0;width:70px;background:var(--green);display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;z-index:80;box-shadow:8px 0 26px rgba(24,51,41,.12)}
 	    .rail-mark{width:42px;height:42px;border-radius:13px;border:1px solid rgba(255,253,250,.18);background:rgba(255,253,250,.08);display:flex;align-items:center;justify-content:center;color:#f1d4bd;font-size:15px;font-weight:900;letter-spacing:.04em}
 	    .main-nav{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;margin-top:6px}
-	    .tab-btn{width:48px;height:48px;padding:0;border:1px solid transparent;border-radius:12px;background:transparent;color:#dfd4c7;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
+	    .tab-btn{width:42px;height:42px;padding:0;border:1px solid transparent;border-radius:12px;background:transparent;color:#dfd4c7;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
 	    .tab-btn svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none}
 	    .tab-btn:hover{background:rgba(255,253,250,.1);color:var(--paper)}
 	    .tab-btn.active{background:var(--paper);color:var(--green);box-shadow:inset 3px 0 0 var(--bronze),0 10px 22px rgba(9,20,15,.18)}
-	    .top-context{height:68px;padding:0 26px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:22px;position:sticky;top:0;z-index:50}
-	    .header-left{min-width:260px;display:flex;flex-direction:column;gap:1px}
+	    .top-context{min-height:64px;height:auto;padding:12px 36px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:20px;position:sticky;top:0;z-index:50;width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+	    .header-left,.top-context-left{min-width:0!important;max-width:100%!important;display:flex;flex-direction:column;gap:1px;flex-shrink:0;padding-left:4px}
 	    .brand{font-size:15px;font-weight:850;color:var(--ink);line-height:1.2;letter-spacing:0}
 	    .subtitle{font-size:10px;font-weight:850;letter-spacing:.11em;text-transform:uppercase;color:var(--bronze)}
-	    .context-title{margin-left:auto;display:flex;align-items:center;gap:16px;min-width:0}
-	    .context-chip{display:flex;flex-direction:column;gap:1px;min-width:0}
-	    .context-label,.eyebrow{font-size:10px;font-weight:850;letter-spacing:.11em;text-transform:uppercase;color:var(--bronze)}
-	    .context-value{font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap}
-	    .header-right{display:flex;gap:10px;align-items:center;min-width:0}
+	    .header-right,.top-context-right{display:flex;gap:16px;align-items:center;margin-left:auto;min-width:0;flex-shrink:0}
+	    .context-title{display:flex;align-items:center;gap:16px;min-width:0}
 	    .icon-btn{width:36px;height:36px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);color:var(--green);cursor:pointer;font-size:15px;display:inline-flex;align-items:center;justify-content:center}
 	    .icon-btn:hover{border-color:var(--bronze);background:#faf6f1}
 	    .last-updated{font-size:12px;color:var(--soft);white-space:nowrap}
 	    .user-info{min-width:0}
 	    .user-inline{display:flex;align-items:center;gap:8px;min-width:0}
+	    .user-inline .small{color:var(--soft)!important;font-weight:500;white-space:nowrap!important;overflow:visible!important}
 	    .avatar{width:32px;height:32px;border-radius:50%;background:var(--green);color:var(--paper);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:inset 0 0 0 1px rgba(255,253,250,.18)}
 	    .main{width:100%;max-width:1540px;margin:0 auto;padding:30px 36px 48px}
     .tab-panel{display:block}
 	    .section-surface,.worklist,#earlyDraftHeader,#earlyList,.timeline,.current-activity,.activity-form,.patient-summary,.discharge-alerts{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 	    .kpi-grid{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr;gap:12px;margin-bottom:18px}
-	    .kpi{min-height:92px;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between}
+	    .kpi{min-height:72px;padding:14px 20px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between}
 	    .kpi:first-child{background:var(--green);border-color:var(--green);color:var(--paper)}
 	    .kpi:first-child .kpi-title{color:#d9b697}
 	    .kpi:first-child .kpi-value{color:var(--paper)}
-	    .kpi .kpi-title{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.11em;color:var(--bronze)}
-	    .kpi .kpi-value{font-size:29px;font-weight:900;color:var(--ink);line-height:1}
+	    .kpi .kpi-title{font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.11em;color:var(--bronze)}
+	    .kpi .kpi-value{font-size:32px;font-weight:900;color:var(--ink);line-height:1}
     .filters{margin-bottom:12px}
-	    .toolbar{min-height:52px;margin-bottom:14px;padding:10px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+	    .toolbar{min-height:52px;margin-bottom:14px;padding:10px 16px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
 	    input,select,textarea{border:1px solid var(--line);border-radius:var(--radius-sm);background:#fffdfa;color:var(--ink);outline:none}
 	    input,select{height:36px;padding:0 10px}
 	    textarea{padding:9px 10px;resize:vertical}
 	    input:focus,select:focus,textarea:focus,button:focus-visible{border-color:var(--bronze);outline:3px solid rgba(182,124,80,.34);outline-offset:2px}
-    .toolbar input{min-width:340px;flex:1}
-    .toolbar input[type="date"]{min-width:160px;flex:0 0 auto}
-    .toolbar select{min-width:160px}
+    .toolbar input{min-width:240px;flex:1}
+    .toolbar input[type="date"]{min-width:140px;flex:0 0 auto}
+    .toolbar select{min-width:100px;max-width:140px}
 	    button,.btn-primary{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);color:var(--green);padding:0 12px;cursor:pointer;font-weight:800}
 	    button:hover{background:#faf6f1;border-color:var(--bronze)}
 	    .btn-primary,#refreshWorklist{border-color:var(--bronze);background:var(--bronze);color:#fff;box-shadow:none}
@@ -219,7 +217,7 @@
 	    select option{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
 	    .lookup-results{position:absolute!important;left:0!important;right:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;z-index:9999!important}
 	    @media (max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.patient-body,.patient-main,.early-draft-layout{grid-template-columns:1fr}.early-draft-overview{grid-template-columns:repeat(2,minmax(150px,1fr))}.early-overview-title{grid-column:1/-1}.early-add-panel{position:static}.patient-summary{position:static}.header-left{min-width:auto}.top-context{height:auto;min-height:68px;align-items:flex-start;padding:12px 16px;flex-wrap:wrap}.context-title{margin-left:0;width:100%;justify-content:space-between}.header-right{margin-left:auto}}
-	    @media (max-width:760px){.app-root{padding-left:0!important;padding-top:66px!important}.nav-rail{inset:0 0 auto 0;width:100%!important;height:66px;flex-direction:row;justify-content:space-between}.main-nav{flex-direction:row;width:auto;margin-top:0}.tab-btn{width:44px;height:44px}.top-context{top:auto;position:relative;padding:10px 12px;width:100%!important;box-sizing:border-box!important}.main{padding:12px 10px 32px!important;width:100%!important;box-sizing:border-box!important}.toolbar input,.toolbar select,.filter-card input,.filter-card select{min-width:100%!important;width:100%!important;box-sizing:border-box!important}.kpi-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.patient-toolbar{align-items:flex-start;flex-direction:column}.patient-header-bar{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;padding:10px 12px!important}.patient-header-top{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;width:100%!important}.patient-header-left{width:100%!important}.patient-title-block{width:100%!important;display:flex!important;flex-direction:column!important;gap:4px!important}.patient-name{font-size:15px!important;line-height:1.25!important;width:100%!important;margin:0!important;word-break:break-word!important}.patient-meta-badges{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:4px!important;width:100%!important}.meta-badge{font-size:10.5px!important;padding:2px 7px!important}.patient-header-right{width:auto!important;margin-top:0!important}.btn-outline-modern{width:auto!important;height:32px!important;padding:0 10px!important;justify-content:center!important;font-size:12px!important}.worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:9px 10px}.steps-subgrid{margin:8px 10px 12px 44px}.step-card{grid-template-columns:28px minmax(180px,1fr)}.step-meta,.step-detail-grid{grid-column:2}.step-detail-grid{grid-template-columns:1fr}.last-updated{display:block!important;visibility:visible!important;color:#0f172a!important;font-weight:600!important;font-size:11px!important;white-space:nowrap!important;overflow:visible!important}.context-value{font-size:11px!important;white-space:nowrap!important;overflow:visible!important;color:#0f172a!important;display:block!important}}
+	    @media (max-width:760px){.app-root{padding-left:0!important;padding-top:52px!important}.nav-rail{inset:0 0 auto 0;width:100%!important;max-width:100%!important;height:46px!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;padding:6px 14px!important;box-sizing:border-box!important;gap:6px!important}.rail-mark-group{display:flex!important;align-items:center!important;gap:6px!important;flex-shrink:0!important;width:auto!important}.rail-mark{width:34px!important;height:34px!important;min-width:34px!important;font-size:12px!important;border-radius:9px!important;flex-shrink:0!important}.main-nav{display:flex!important;flex-direction:row!important;align-items:center!important;width:auto!important;margin-top:0!important;margin-right:18px!important;gap:6px!important;flex-shrink:0!important}.tab-btn{width:auto!important;height:34px!important;min-width:auto!important;padding:0 10px!important;gap:6px!important;font-size:11.5px!important;font-weight:600!important;border-radius:8px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important;white-space:nowrap!important}.tab-btn svg{width:15px!important;height:15px!important;min-width:15px!important;margin:0!important;flex-shrink:0!important}.tab-btn-label{display:inline!important;font-size:11.5px!important;font-weight:600!important;color:inherit!important;white-space:nowrap!important}.top-context{top:auto;position:relative;padding:14px 12px 10px;width:100%!important;box-sizing:border-box!important}.main{padding:12px 10px 32px!important;width:100%!important;box-sizing:border-box!important}.toolbar input,.toolbar select,.filter-card input,.filter-card select{min-width:100%!important;width:100%!important;box-sizing:border-box!important}.kpi-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.patient-toolbar{align-items:flex-start;flex-direction:column}.patient-header-bar{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;padding:10px 12px!important}.patient-header-top{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;width:100%!important}.patient-header-left{width:100%!important}.patient-title-block{width:100%!important;display:flex!important;flex-direction:column!important;gap:4px!important}.patient-name{font-size:15px!important;line-height:1.25!important;width:100%!important;margin:0!important;word-break:break-word!important}.patient-meta-badges{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:4px!important;width:100%!important}.meta-badge{font-size:10.5px!important;padding:2px 7px!important}.patient-header-right{width:auto!important;margin-top:0!important}.btn-outline-modern{width:auto!important;height:32px!important;padding:0 10px!important;justify-content:center!important;font-size:12px!important}.worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:9px 10px}.steps-subgrid{margin:8px 10px 12px 44px}.step-card{grid-template-columns:28px minmax(180px,1fr)}.step-meta,.step-detail-grid{grid-column:2}.step-detail-grid{grid-template-columns:1fr}.last-updated{display:block!important;visibility:visible!important;color:#0f172a!important;font-weight:600!important;font-size:11px!important;white-space:nowrap!important;overflow:visible!important}.context-value{font-size:11px!important;white-space:nowrap!important;overflow:visible!important;color:#0f172a!important;display:block!important}}
     </style>
 </head>
 <body>
@@ -229,29 +227,36 @@
 	            <nav class="main-nav" role="navigation" aria-label="Main">
 	                <button data-tab="worklist" class="tab-btn active" title="Discharge Worklist" aria-label="Discharge Worklist">
 	                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
+	                    <span class="tab-btn-label">Patient Discharges</span>
 	                </button>
 	                <button data-tab="early" class="tab-btn" title="Early Discharge" aria-label="Early Discharge">
 	                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5l3 2"></path><path d="M4 13a8 8 0 1 0 2.3-5.7"></path><path d="M4 4v5h5"></path></svg>
+	                    <span class="tab-btn-label">Early Discharge</span>
 	                </button>
 	            </nav>
 	        </aside>
 	
 	        <header class="top-context">
-	            <div class="header-left">
-	                <div class="subtitle">PATIENT DISCHARGE OPERATIONS</div>
-	                <div class="brand">Patient Discharge / Hospital Operations</div>
+	            <div class="top-context-left header-left">
+	                <div class="subtitle">PATIENT DISCHARGE CYCLE</div>
+	                <div class="brand">Patient Discharge Cycle</div>
 	            </div>
-	            <div class="context-title">
-	                <div class="context-chip context-chip-left"><span class="context-label">Business Unit</span><span class="context-value">AHJ</span></div>
-	                <div class="context-chip context-chip-center"><span class="context-label">Updated</span><span id="lastUpdated" class="context-value last-updated">Just now</span></div>
-	                <div class="context-chip context-chip-right"><span class="context-label">Attention</span><span id="attentionSummary" class="context-value">Pending review</span></div>
-	            </div>
-	            <div class="header-right">
-	                <button id="headerRefresh" class="icon-btn" title="Refresh" aria-label="Refresh">
-	                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.7"></path><path d="M4 12A8 8 0 0 1 17.7 6.3"></path><path d="M17 2v5h5"></path><path d="M7 22v-5H2"></path></svg>
-	                </button>
-	                <div id="dataverseError" class="small"></div>
-	                <div class="user-info" id="currentUser">Loading user...</div>
+	            <div class="top-context-right header-right">
+	                <div class="top-context-user-group">
+	                    <button id="headerRefresh" class="icon-btn" title="Refresh" aria-label="Refresh">
+	                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.7"></path><path d="M4 12A8 8 0 0 1 17.7 6.3"></path><path d="M17 2v5h5"></path><path d="M7 22v-5H2"></path></svg>
+	                    </button>
+	                    <div id="dataverseError" class="small"></div>
+	                    <div class="user-inline">
+	                        <div class="avatar">MH</div>
+	                        <div class="user-info small" id="currentUser">Mariam Hisham<br>Ezzat</div>
+	                    </div>
+	                </div>
+	                <div class="context-title">
+	                    <div class="context-chip context-chip-left"><span class="context-label">BUSINESS UNIT</span><span class="context-value">AHJ</span></div>
+	                    <div class="context-chip context-chip-center"><span class="context-label">UPDATED</span><span id="lastUpdated" class="context-value last-updated">Just now</span></div>
+	                    <div class="context-chip context-chip-right"><span class="context-label">ATTENTION</span><span id="attentionSummary" class="context-value">747 pending</span></div>
+	                </div>
 	            </div>
 	        </header>
 
