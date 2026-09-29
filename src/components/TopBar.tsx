@@ -64,7 +64,9 @@ export function TopBar({
         <div className="context-chip context-chip-center">
           <span className="context-label">Updated</span>
           <span className="context-value last-updated">
-            {updated ? updated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {updated && !isNaN(updated.getTime())
+              ? updated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+              : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </span>
         </div>
         <div className="context-chip context-chip-right">

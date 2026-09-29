@@ -129,7 +129,7 @@ export function EarlyDraftPage({
   return (
     <section className="patient-panel">
       <div className="patient-header-bar">
-        <div className="patient-header-left">
+        <div className="patient-header-top">
           <button className="btn-back" disabled={busy} onClick={back}>
             <svg
               width="15"
@@ -146,49 +146,49 @@ export function EarlyDraftPage({
             </svg>
             <span>Back to Early Discharges</span>
           </button>
-          <div className="patient-title-block">
-            <h1 className="patient-name">Early Discharge Draft — {date}</h1>
-            <div className="patient-meta-badges">
-              <span className="meta-badge">
-                Status: <strong>{status}</strong>
-              </span>
-              <span className="meta-badge">
-                Total Patients:{" "}
-                <strong>
-                  {patients.loading ? "..." : (patients.data?.length ?? 0)}
-                </strong>
-              </span>
-              {submitted && (
-                <span className="meta-badge">
-                  Submitted By:{" "}
-                  <strong>{displayValue(d, "_and_submittedby_value")}</strong>
-                </span>
-              )}
-            </div>
+          <div className="patient-header-right">
+            <button
+              className="btn-outline-modern"
+              onClick={draft.refresh}
+              disabled={busy}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              <span>Refresh Draft</span>
+            </button>
           </div>
         </div>
-        <div className="patient-header-right">
-          <button
-            className="btn-outline-modern"
-            onClick={draft.refresh}
-            disabled={busy}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M23 4v6h-6"></path>
-              <path d="M1 20v-6h6"></path>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            <span>Refresh Draft</span>
-          </button>
+        <div className="patient-title-block">
+          <h1 className="patient-name">Early Discharge Draft — {date}</h1>
+          <div className="patient-meta-badges">
+            <span className="meta-badge">
+              Status: <strong>{status}</strong>
+            </span>
+            <span className="meta-badge">
+              Total Patients:{" "}
+              <strong>
+                {patients.loading ? "..." : (patients.data?.length ?? 0)}
+              </strong>
+            </span>
+            {submitted && (
+              <span className="meta-badge">
+                Submitted By:{" "}
+                <strong>{displayValue(d, "_and_submittedby_value")}</strong>
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <div className="early-workspace">
