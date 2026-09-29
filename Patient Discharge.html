@@ -209,13 +209,17 @@
 	    .modal>div{padding:21px}
 	    .modal-backdrop{position:fixed;inset:0;background:rgba(13,28,20,.62);z-index:900}
 	    html,body,#app,.app-root{overflow-x:hidden!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important}
-	    .last-updated{display:inline-block!important;visibility:visible!important;opacity:1!important}
+	    .last-updated{display:inline-block!important;visibility:visible!important;opacity:1!important;color:var(--ink)!important;font-weight:600!important}
 	    .context-chip{flex:1 1 0px!important;min-width:0!important}
 	    .context-chip-left{text-align:left!important}
 	    .context-chip-center{text-align:center!important}
 	    .context-chip-right{text-align:right!important}
+	    .form-row,.activity-form,.activity-form-inner,fieldset,.select-wrapper,.lookup-wrap,.lookup-input-wrap,select,input,textarea{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+	    select{display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 12px center;background-size:16px 16px;padding-right:32px!important}
+	    select option{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+	    .lookup-results{position:absolute!important;left:0!important;right:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;z-index:9999!important}
 	    @media (max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.patient-body,.patient-main,.early-draft-layout{grid-template-columns:1fr}.early-draft-overview{grid-template-columns:repeat(2,minmax(150px,1fr))}.early-overview-title{grid-column:1/-1}.early-add-panel{position:static}.patient-summary{position:static}.header-left{min-width:auto}.top-context{height:auto;min-height:68px;align-items:flex-start;padding:12px 16px;flex-wrap:wrap}.context-title{margin-left:0;width:100%;justify-content:space-between}.header-right{margin-left:auto}}
-	    @media (max-width:760px){.app-root{padding-left:0!important;padding-top:66px!important}.nav-rail{inset:0 0 auto 0;width:100%!important;height:66px;flex-direction:row;justify-content:space-between}.main-nav{flex-direction:row;width:auto;margin-top:0}.tab-btn{width:44px;height:44px}.top-context{top:auto;position:relative;padding:10px 12px;width:100%!important;box-sizing:border-box!important}.main{padding:12px 10px 32px!important;width:100%!important;box-sizing:border-box!important}.toolbar input,.toolbar select,.filter-card input,.filter-card select{min-width:100%!important;width:100%!important;box-sizing:border-box!important}.kpi-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.patient-toolbar{align-items:flex-start;flex-direction:column}.worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:9px 10px}.steps-subgrid{margin:8px 10px 12px 44px}.step-card{grid-template-columns:28px minmax(180px,1fr)}.step-meta,.step-detail-grid{grid-column:2}.step-detail-grid{grid-template-columns:1fr}.last-updated{display:inline-block!important;visibility:visible!important}.context-value{font-size:11px!important;white-space:nowrap!important;overflow:visible!important}}
+	    @media (max-width:760px){.app-root{padding-left:0!important;padding-top:66px!important}.nav-rail{inset:0 0 auto 0;width:100%!important;height:66px;flex-direction:row;justify-content:space-between}.main-nav{flex-direction:row;width:auto;margin-top:0}.tab-btn{width:44px;height:44px}.top-context{top:auto;position:relative;padding:10px 12px;width:100%!important;box-sizing:border-box!important}.main{padding:12px 10px 32px!important;width:100%!important;box-sizing:border-box!important}.toolbar input,.toolbar select,.filter-card input,.filter-card select{min-width:100%!important;width:100%!important;box-sizing:border-box!important}.kpi-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.patient-toolbar{align-items:flex-start;flex-direction:column}.patient-header-bar{flex-direction:column!important;align-items:stretch!important;gap:10px!important;padding:12px 14px!important}.patient-header-left{flex-direction:column!important;align-items:flex-start!important;gap:8px!important;width:100%!important}.patient-title-block{width:100%!important}.patient-name{font-size:16px!important;line-height:1.3!important;width:100%!important}.patient-header-right{width:100%!important;margin-top:2px!important}.btn-outline-modern{width:100%!important;height:38px!important;justify-content:center!important}.worklist th,.worklist td,.worklist-table th,.worklist-table td{padding:9px 10px}.steps-subgrid{margin:8px 10px 12px 44px}.step-card{grid-template-columns:28px minmax(180px,1fr)}.step-meta,.step-detail-grid{grid-column:2}.step-detail-grid{grid-template-columns:1fr}.last-updated{display:inline-block!important;visibility:visible!important;color:var(--ink)!important;font-weight:600!important}.context-value{font-size:11px!important;white-space:nowrap!important;overflow:visible!important;color:var(--ink)!important}}
     </style>
 </head>
 <body>
@@ -239,7 +243,7 @@
 	            </div>
 	            <div class="context-title">
 	                <div class="context-chip context-chip-left"><span class="context-label">Business Unit</span><span class="context-value">AHJ</span></div>
-	                <div class="context-chip context-chip-center"><span class="context-label">Updated</span><span id="lastUpdated" class="context-value last-updated">-</span></div>
+	                <div class="context-chip context-chip-center"><span class="context-label">Updated</span><span id="lastUpdated" class="context-value last-updated">Just now</span></div>
 	                <div class="context-chip context-chip-right"><span class="context-label">Attention</span><span id="attentionSummary" class="context-value">Pending review</span></div>
 	            </div>
 	            <div class="header-right">
@@ -286,10 +290,12 @@
             </section>
 
             <section id="patientPanel" class="patient-panel tab-panel hidden">
-                <div class="patient-toolbar">
-                    <button id="backToWorklist">Back to Worklist</button>
-                    <button id="openPatientRecord">Open Full Record</button>
-                    <div id="patientHeader" class="patient-header"></div>
+                <div class="patient-header-bar">
+                    <div class="patient-header-top">
+                        <button id="backToWorklist" class="btn-back">Back to Worklist</button>
+                        <button id="openPatientRecord" class="btn-outline-modern">Open Full Record</button>
+                    </div>
+                    <div id="patientHeader" class="patient-title-block"></div>
                 </div>
                 <div class="patient-body">
                     <aside class="patient-summary" id="patientSummary"></aside>
@@ -1338,7 +1344,7 @@
 
         async function renderCurrentUser() { try { let name = 'Unknown User'; if (XrmContext && XrmContext.Utility && XrmContext.Utility.getGlobalContext) { const ctx = XrmContext.Utility.getGlobalContext(); const u = ctx.userSettings || {}; name = u.userName || u.fullName || name; } const el = $id('currentUser'); if (!el) return; const initials = name.split(' ').map(s=>s[0]).filter(Boolean).slice(0,2).join('').toUpperCase(); el.innerHTML = `<div class="user-inline"><div class="avatar">${initials}</div><div class="small">${name}</div></div>`; } catch (e) { console.error(e); } }
 
-	        function updateLastUpdated() { const el = $id('lastUpdated'); if (!el) return; el.textContent = 'Updated ' + new Date().toLocaleTimeString(); }
+	        function updateLastUpdated() { const el = $id('lastUpdated'); if (!el) return; el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
         function sortPatientsNewestFirst(rows) {
             const sortTime = (row) => {
@@ -1729,7 +1735,24 @@
                 </td>`;
         }
 
-        async function openPatientWorkspace(record) { State.selectedPatient = record; switchTab('patientPanel'); $id('patientHeader').textContent = `${record[CONFIG.fields.patientName] || ''} - ${record[CONFIG.fields.name] || ''}`; renderPatientSummary(record); const patientId = record[CONFIG.fields.id] || record[CONFIG.fields.id.toLowerCase()]; await Promise.all([loadPatientActivities(patientId), loadDischargeAlerts(patientId)]); }
+        async function openPatientWorkspace(record) {
+            State.selectedPatient = record;
+            switchTab('patientPanel');
+            const p = getPatientDisplayData(record);
+            const hdr = $id('patientHeader');
+            if (hdr) {
+                hdr.innerHTML = `
+                    <h1 class="patient-name">${escapeHtml(p.patientName || 'Patient Workspace')}</h1>
+                    <div class="patient-meta-badges">
+                        ${p.patientId ? `<span class="meta-badge">MRN: <strong>${escapeHtml(p.patientId)}</strong></span>` : ''}
+                        ${p.visitId ? `<span class="meta-badge">Visit: <strong>${escapeHtml(p.visitId)}</strong></span>` : ''}
+                        ${p.reference ? `<span class="meta-badge">Ref: <strong>${escapeHtml(p.reference)}</strong></span>` : ''}
+                    </div>`;
+            }
+            renderPatientSummary(record);
+            const patientId = record[CONFIG.fields.id] || record[CONFIG.fields.id.toLowerCase()];
+            await Promise.all([loadPatientActivities(patientId), loadDischargeAlerts(patientId)]);
+        }
 
         function renderPatientSummary(rec) {
             const el = $id('patientSummary');

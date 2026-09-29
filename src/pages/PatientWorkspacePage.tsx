@@ -107,31 +107,29 @@ export function PatientWorkspacePage({
   return (
     <section className="patient-panel">
       <div className="patient-header-bar">
-        <div className="patient-header-left">
+        <div className="patient-header-top">
           <button className="btn-back" disabled={busy} onClick={back}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             <span>Back to Worklist</span>
           </button>
-          <div className="patient-title-block">
-            <h1 className="patient-name">{snapshot.parent.crad2_patientname || "Patient Workspace"}</h1>
-            <div className="patient-meta-badges">
-              {snapshot.parent.new_patientid && (
-                <span className="meta-badge">MRN: <strong>{snapshot.parent.new_patientid}</strong></span>
-              )}
-              {snapshot.parent.crad2_visitid && (
-                <span className="meta-badge">Visit: <strong>{snapshot.parent.crad2_visitid}</strong></span>
-              )}
-              {snapshot.parent.crad2_dischargereference && (
-                <span className="meta-badge">Ref: <strong>{snapshot.parent.crad2_dischargereference}</strong></span>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="patient-header-right">
           <RecordLink className="btn-outline-modern" table={tables.patient} id={id}>
             <span>Open Full Record</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           </RecordLink>
+        </div>
+        <div className="patient-title-block">
+          <h1 className="patient-name">{snapshot.parent.crad2_patientname || "Patient Workspace"}</h1>
+          <div className="patient-meta-badges">
+            {snapshot.parent.new_patientid && (
+              <span className="meta-badge">MRN: <strong>{snapshot.parent.new_patientid}</strong></span>
+            )}
+            {snapshot.parent.crad2_visitid && (
+              <span className="meta-badge">Visit: <strong>{snapshot.parent.crad2_visitid}</strong></span>
+            )}
+            {snapshot.parent.crad2_dischargereference && (
+              <span className="meta-badge">Ref: <strong>{snapshot.parent.crad2_dischargereference}</strong></span>
+            )}
+          </div>
         </div>
       </div>
       <div className="patient-body">
