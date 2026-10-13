@@ -7,10 +7,22 @@ import {
 import { tables } from "../config/schema";
 import { StatusBadge } from "./StatusBadge";
 import { RecordLink } from "./RecordLink";
-export function DischargeState({ activity }: { activity?: Activity }) {
+export function DischargeState({
+  activity,
+  waitingForHomeMedications = false,
+}: {
+  activity?: Activity;
+  waitingForHomeMedications?: boolean;
+}) {
   return (
     <div className="current-activity">
-      {activity ? (
+      {waitingForHomeMedications ? (
+        <>
+          <div className="panel-label">Current Activity</div>
+          <div className="activity-title">Home Medications Preparation</div>
+          <div className="small">Waiting for the activity to be created...</div>
+        </>
+      ) : activity ? (
         <>
           <div className="activity-head">
             <div>

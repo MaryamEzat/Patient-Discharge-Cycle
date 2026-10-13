@@ -11,11 +11,21 @@ import { tables } from "../config/schema";
 export function ActivityTimeline({
   activities,
   compact = false,
+  onOpen,
+  currentActivityId,
 }: {
   activities: Activity[];
   compact?: boolean;
+  onOpen?: () => void;
+  currentActivityId?: string | null;
 }) {
-  const current = currentActivity(activities);
+  const current =
+    currentActivityId === undefined
+      ? currentActivity(activities)
+      : activities.find(
+          (activity) =>
+            activity.crad2_dischargeactivityid === currentActivityId,
+        );
   if (!activities.length)
     return <div className="empty-state">No discharge activities found.</div>;
 
@@ -24,7 +34,20 @@ export function ActivityTimeline({
       <div className="steps-subgrid">
         <div className="steps-list">
           {activities.map((a, i) => (
-            <div className="step-card" key={a.crad2_dischargeactivityid}>
+            <div
+              className={`step-card${onOpen ? " step-card-clickable" : ""}`}
+              key={a.crad2_dischargeactivityid}
+              role={onOpen ? "button" : undefined}
+              tabIndex={onOpen ? 0 : undefined}
+              aria-label={onOpen ? `Open patient record from ${a.crad2_subject}` : undefined}
+              onClick={onOpen}
+              onKeyDown={(event) => {
+                if (onOpen && (event.key === "Enter" || event.key === " ")) {
+                  event.preventDefault();
+                  onOpen();
+                }
+              }}
+            >
               <div className="step-index">{i + 1}</div>
               <div>
                 <div className="step-main-title">{a.crad2_subject}</div>

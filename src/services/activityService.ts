@@ -21,7 +21,14 @@ import {
   updateRecordOrg,
   uploadFileOrg,
 } from "./dataverseAdapter";
-import { normalizeSubject } from "../presentation/format";
+import { displayValue, normalizeSubject } from "../presentation/format";
+
+const WITH_DUES_FIELD = "cr301_withdues";
+const HOME_MEDICATION_DISPENSING_FIELD =
+  "cr301_homemedicationdispensingrequired";
+export const HOME_MEDICATION_DISPENSING_YES = 293170000;
+const CLEARED_ACTIVITY = 408520000;
+
 export type Activity = Crad2_dischargeactivities;
 export interface LookupOption {
   id: string;
@@ -31,14 +38,66 @@ export interface ActivityInput {
   action: string;
   instructions: string;
   pharmacyReturn: string;
+  withDues: string;
+  homeMedicationDispensingRequired: string;
   followUp: string;
   delayReason?: LookupOption;
   team?: LookupOption;
   comment: string;
   physical: Record<string, string>;
 }
+function isSubject(activity: Activity, subject: string) {
+  return normalizeSubject(activity.crad2_subject).includes(subject);
+}
+
+export function hasHomeMedicationsActivity(rows: Activity[]) {
+  return rows.some((activity) =>
+    isSubject(activity, "home medications preparation"),
+  );
+}
+
+export function activitySequence(
+  rows: Activity[],
+  expectHomeMedications = false,
+  enableHomeMedicationSequence = true,
+) {
+  const initiation = rows.find((activity) =>
+    isSubject(activity, "request initiation"),
+  );
+  const homeMedicationActivities = rows.filter((activity) =>
+    isSubject(activity, "home medications preparation"),
+  );
+  const homeMedicationsRequired =
+    expectHomeMedications ||
+    (enableHomeMedicationSequence &&
+      initiation?.crad2_status === CLEARED_ACTIVITY &&
+      Number(initiation.cr301_homemedicationdispensingrequired) ===
+        HOME_MEDICATION_DISPENSING_YES);
+
+  if (homeMedicationsRequired) {
+    const pendingHomeMedications = homeMedicationActivities.find(
+      (activity) => activity.crad2_status !== CLEARED_ACTIVITY,
+    );
+    if (pendingHomeMedications)
+      return {
+        current: pendingHomeMedications,
+        waitingForHomeMedications: false,
+      };
+    if (homeMedicationActivities.length === 0)
+      return { current: undefined, waitingForHomeMedications: true };
+  }
+
+  return {
+    current:
+      rows.find((activity) => activity.crad2_status !== CLEARED_ACTIVITY) ||
+      rows.at(-1),
+    waitingForHomeMedications: false,
+  };
+}
+
 export const currentActivity = (rows: Activity[]) =>
-  rows.find((a) => a.crad2_status !== 408520000) || rows.at(-1);
+  rows.find((activity) => activity.crad2_status !== CLEARED_ACTIVITY) ||
+  rows.at(-1);
 export function activityRules(activity: Activity) {
   const name = normalizeSubject(activity.crad2_subject);
   return {
@@ -47,6 +106,31 @@ export function activityRules(activity: Activity) {
     delay:
       name.includes("request initiation") ||
       name.includes("home medications preparation"),
+  };
+}
+export function activityBusinessRules(activity: Activity, action: string) {
+  const subject = normalizeSubject(activity.crad2_subject);
+  const normalizeLookupName = (value: string) =>
+    value.trim().toLowerCase().replace(/\s+/g, " ");
+  const owner = normalizeLookupName(
+    displayValue(activity, "_ownerid_value", null, ""),
+  );
+  const team = displayValue(
+    activity,
+    "_and_teamlookup_value",
+    null,
+    "",
+  );
+  const normalizedTeam = normalizeLookupName(team);
+  const nursingFirstStep = "nursing discharge first step";
+  return {
+    withDues:
+      subject.includes("financial") &&
+      !owner.includes("ahj") &&
+      action === "408520000",
+    homeMedicationDispensing:
+      normalizedTeam.includes(nursingFirstStep) &&
+      normalizedTeam !== `ahj-${nursingFirstStep}`,
   };
 }
 // Original activity field references, filtered against generated schema. No guessed columns in queries.
@@ -73,6 +157,8 @@ const desired = [
   "crad2_wasforwarded",
   "_crad2_forwardtoteam_value",
   "and_teamlookup",
+  HOME_MEDICATION_DISPENSING_FIELD,
+  WITH_DUES_FIELD,
   "new_forwardtoteam",
   "crda1_forwardtoteamdate",
   "and_modifiedby",
@@ -102,6 +188,7 @@ export function buildActivityPayload(
   input: ActivityInput,
 ): Partial<Crad2_dischargeactivitiesBase> {
   const rules = activityRules(activity);
+  const businessRules = activityBusinessRules(activity, input.action);
   if (
     input.action === "" ||
     !Object.hasOwn(choiceOptions(tables.activity, "crad2_status"), input.action)
@@ -120,9 +207,41 @@ export function buildActivityPayload(
     );
   if (input.action === "2" && !input.team)
     throw new OperationalError("Select a team to forward this activity to.");
+  if (businessRules.withDues && input.withDues === "")
+    throw new OperationalError("With dues is required before saving.");
+  if (
+    businessRules.withDues &&
+    !Object.hasOwn(
+      choiceOptions(tables.activity, WITH_DUES_FIELD),
+      input.withDues,
+    )
+  )
+    throw new OperationalError("Select a valid With dues value.");
+  if (
+    businessRules.homeMedicationDispensing &&
+    input.homeMedicationDispensingRequired === ""
+  )
+    throw new OperationalError(
+      "Home Medication Dispensing is required before saving.",
+    );
+  if (
+    businessRules.homeMedicationDispensing &&
+    !Object.hasOwn(
+      choiceOptions(tables.activity, HOME_MEDICATION_DISPENSING_FIELD),
+      input.homeMedicationDispensingRequired,
+    )
+  )
+    throw new OperationalError(
+      "Select a valid Home Medication Dispensing value.",
+    );
   const payload: Record<string, unknown> = {
     crad2_status: Number(input.action),
   };
+  if (businessRules.withDues)
+    payload[WITH_DUES_FIELD] = Number(input.withDues);
+  if (businessRules.homeMedicationDispensing)
+    payload[HOME_MEDICATION_DISPENSING_FIELD] =
+      Number(input.homeMedicationDispensingRequired);
   // As in HTML, blank comment is not a request to clear an existing comment.
   if (input.comment !== "") payload.new_comment = input.comment;
   if (input.action === "408520000")

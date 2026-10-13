@@ -118,6 +118,21 @@ export const normalizeSubject = (v: unknown) =>
     .replace(/[^a-zA-Z0-9 ]/g, "")
     .trim()
     .toLowerCase();
+
+export function formatDuration(value: unknown, empty = "-") {
+  if (value === null || value === undefined || value === "") return empty;
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes) || minutes < 0) return empty;
+  const total = Math.floor(minutes);
+  const days = Math.floor(total / 1440);
+  const hours = Math.floor((total % 1440) / 60);
+  const remainingMinutes = total % 60;
+  const parts: string[] = [];
+  if (days) parts.push(`${days}d`);
+  if (hours) parts.push(`${hours}h`);
+  if (remainingMinutes || parts.length === 0) parts.push(`${remainingMinutes}m`);
+  return parts.join(" ");
+}
 export function dateKey(value: unknown) {
   if (isBlank(value)) return "";
   const d = new Date(String(value));

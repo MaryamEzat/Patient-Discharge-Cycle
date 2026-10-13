@@ -20,6 +20,16 @@ export const Crad2_dischargeactivitiesand_doyouhaveafollowupappointment = {
   2: 'Not Done'
 } as const;
 export type Crad2_dischargeactivitiesand_doyouhaveafollowupappointment = keyof typeof Crad2_dischargeactivitiesand_doyouhaveafollowupappointment;
+export const Crad2_dischargeactivitiescr301_homemedicationdispensingrequired = {
+  293170000: 'Yes',
+  293170001: 'No'
+} as const;
+export type Crad2_dischargeactivitiescr301_homemedicationdispensingrequired = keyof typeof Crad2_dischargeactivitiescr301_homemedicationdispensingrequired;
+export const Crad2_dischargeactivitiescr301_withdues = {
+  293170000: 'Yes',
+  293170001: 'No'
+} as const;
+export type Crad2_dischargeactivitiescr301_withdues = keyof typeof Crad2_dischargeactivitiescr301_withdues;
 export const Crad2_dischargeactivitiescrad2_billingstatus = {
   408520000: 'Cleared',
   408520001: 'Not Cleared'
@@ -87,6 +97,8 @@ export interface Crad2_dischargeactivitiesBase {
   and_doyouhaveafollowupappointment?: Crad2_dischargeactivitiesand_doyouhaveafollowupappointment;
   and_modifiedby?: string;
   "and_teamlookup@odata.bind"?: string;
+  cr301_homemedicationdispensingrequired?: Crad2_dischargeactivitiescr301_homemedicationdispensingrequired;
+  cr301_withdues?: Crad2_dischargeactivitiescr301_withdues;
   crad2_actiondate?: string;
   crad2_billingcomment?: string;
   crad2_billingstatus?: Crad2_dischargeactivitiescrad2_billingstatus;
@@ -137,7 +149,10 @@ export interface Crad2_dischargeactivities extends Crad2_dischargeactivitiesBase
   and_tat?: number;
   and_teamlookupname?: string;
   and_teamlookupyominame?: string;
+  cr301_entityid?: string;
+  cr301_homemedicationdispensingrequiredname?: string;
   cr301_maxdischargedate?: string;
+  cr301_withduesname?: string;
   crad2_billingstatusname?: string;
   crad2_completechargingitemsname?: string;
   crad2_dischargename?: string;

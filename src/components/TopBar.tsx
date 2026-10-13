@@ -1,5 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import { useResource } from "../hooks/useResource";
 import { platformService } from "../services/platformService";
+import { useScope } from "../scope/ScopeContext";
+import { SCOPES } from "../scope/scope";
 export function TopBar({
   refresh,
   updated,
@@ -9,11 +12,29 @@ export function TopBar({
   updated?: Date;
   pending?: number;
 }) {
+  const { value: scope, setValue: setScope } = useScope();
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const scopeMenu = useRef<HTMLDivElement>(null);
   const context = useResource(platformService.context);
   const name =
     context.data?.user.fullName ||
     context.data?.user.userPrincipalName ||
     "Current user";
+  useEffect(() => {
+    if (!scopeOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!scopeMenu.current?.contains(event.target as Node)) setScopeOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setScopeOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [scopeOpen]);
   return (
     <header className="top-context">
       <div className="top-context-left">
@@ -56,9 +77,40 @@ export function TopBar({
           </div>
         </div>
         <div className="context-title">
-          <div className="context-chip context-chip-left">
-            <span className="context-label">BUSINESS UNIT</span>
-            <span className="context-value">AHJ</span>
+          <div className="context-chip context-chip-left scope-switcher" ref={scopeMenu}>
+            <span className="context-label">COUNTRY</span>
+            <button
+              type="button"
+              className="scope-trigger"
+              aria-haspopup="listbox"
+              aria-expanded={scopeOpen}
+              onClick={() => setScopeOpen((open) => !open)}
+            >
+              <span>{scope || "Select country"}</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="12" height="12">
+                <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" />
+              </svg>
+            </button>
+            {scopeOpen && (
+              <div className="scope-menu" role="listbox" aria-label="Country">
+                {SCOPES.map((option) => (
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={option === scope}
+                    className={option === scope ? "active" : ""}
+                    key={option}
+                    onClick={() => {
+                      setScope(option);
+                      setScopeOpen(false);
+                    }}
+                  >
+                    <span>{option}</span>
+                    {option === scope && <span aria-hidden="true">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="context-chip context-chip-center">
             <span className="context-label">UPDATED</span>

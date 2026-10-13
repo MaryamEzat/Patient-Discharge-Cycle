@@ -4,6 +4,8 @@ import type { IOperationResult } from "@microsoft/power-apps/data";
 import { OperationalError } from "./data";
 import { entitySet } from "../config/schema";
 
+const formattedValuesPreference = 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"';
+
 /**
  * Target Dataverse Organization URL.
  * When the Code App is deployed to a home environment (e.g. https://org998df960.crm4.dynamics.com/),
@@ -34,7 +36,7 @@ export async function listRecordsOrg<T>(
   const result = await MicrosoftDataverseService.ListRecordsWithOrganization(
     orgUrl,
     eset,
-    undefined,
+    formattedValuesPreference,
     "application/json",
     undefined,
     undefined,
@@ -100,7 +102,7 @@ export async function getItemOrg<T>(
 ): Promise<IOperationResult<T>> {
   const eset = resolveEntitySet(entityName);
   const result = await MicrosoftDataverseService.GetItemWithOrganization(
-    "return=representation",
+    `return=representation,${formattedValuesPreference}`,
     "application/json",
     orgUrl,
     eset,

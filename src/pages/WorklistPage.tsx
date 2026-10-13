@@ -1,22 +1,40 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   type Patient,
   type Filters,
+  type DischargeView,
+  dischargeService,
   filterPatients,
+  sortDelayedPatients,
 } from "../services/dischargeService";
 import {
   activityService,
-  currentActivity,
+  activitySequence,
   type Activity,
 } from "../services/activityService";
 import { getPatientDisplayData } from "../presentation/reference";
-import { truthy } from "../presentation/format";
-import { DashboardPage } from "./DashboardPage";
+import {
+  displayDateTime,
+  formatDuration,
+  truthy,
+} from "../presentation/format";
+import { DashboardPage, DelayedDashboardPage } from "./DashboardPage";
 import { FilterBar } from "../components/FilterBar";
 import { StatusBadge } from "../components/StatusBadge";
 import { ActivityTimeline } from "../components/ActivityTimeline";
 import { LoadingState } from "../components/LoadingState";
 import { ErrorState } from "../components/ErrorState";
+import { egyptBusinessUnitFromEntityId, recordsForScope } from "../scope/scope";
+import { useScope } from "../scope/ScopeContext";
+import { ColumnHeaderMenu } from "../components/ColumnHeaderMenu";
+import {
+  applyColumnFiltersLocally,
+  applyManualColumnSort,
+  buildColumnFiltersOData,
+  columnControlDefinitions,
+  type ColumnFilter,
+  type ColumnSort,
+} from "../services/columnControls";
 export const worklistColumns = [
   ["Status", "status"],
   ["Current Step", "currentStep"],
@@ -50,6 +68,30 @@ export const worklistColumns = [
   ["Physical Discharge TAT", "physicalDischargeTAT"],
   ["SLA Category", "slaCategory"],
 ] as const;
+export const delayedWorklistColumns = [
+  ["Status", "status"],
+  ["Current Step", "currentStep"],
+  ["Patient Name", "patientName"],
+  ["Patient ID", "patientId"],
+  ["Visit ID", "visitId"],
+  ["Business Unit", "egyptBusinessUnit"],
+  ["Unit / Nurse Station", "nurseStation"],
+  ["Discharge Type", "dischargeType"],
+  ["Physician Discharge", "physicianDischargeDate"],
+  ["Current Discharge TAT", "currentDischargeTAT"],
+  ["Longest Step", "longestStep"],
+  ["Longest Step Duration", "longestStepDuration"],
+  ["Physician Name", "physician"],
+  ["Last Activity", "lastActivity"],
+  ["File Scan Status", "fileScanStatus"],
+  ["Home Medications Flag", "homeMedicationsFlag"],
+  ["Admission Date", "admissionDate"],
+  ["Floor", "floor"],
+  ["Room", "room"],
+  ["Bed", "bed"],
+  ["Cancellation Reason", "cancellationReason"],
+  ["Alert Flag", "alertFlag"],
+] as const;
 export const columnWidths: Record<string, string> = {
   status: "130px",
   currentStep: "250px",
@@ -82,6 +124,10 @@ export const columnWidths: Record<string, string> = {
   createdDate: "160px",
   physicalDischargeTAT: "160px",
   slaCategory: "140px",
+  egyptBusinessUnit: "130px",
+  currentDischargeTAT: "175px",
+  longestStep: "220px",
+  longestStepDuration: "175px",
 };
 
 const PAGE_SIZE = 15;
@@ -100,6 +146,10 @@ function getPageNumbers(current: number, total: number): (number | string)[] {
 }
 
 export function WorklistPage({
+  view,
+  dataRevision,
+  setView,
+  canViewDelayed,
   rows,
   loading,
   backgroundLoading,
@@ -111,6 +161,10 @@ export function WorklistPage({
   filters,
   setFilters,
 }: {
+  view: DischargeView;
+  dataRevision: number;
+  setView: (view: DischargeView) => void;
+  canViewDelayed: boolean;
   rows: Patient[];
   loading: boolean;
   backgroundLoading?: boolean;
@@ -122,9 +176,79 @@ export function WorklistPage({
   filters: Filters;
   setFilters: (f: Filters) => void;
 }) {
-  const visible = filterPatients(rows, filters);
+  const { value: scope } = useScope();
+  const columns = view === "delayed" ? delayedWorklistColumns : worklistColumns;
+  const [columnFiltersByView, setColumnFiltersByView] = useState<
+    Record<DischargeView, Record<string, ColumnFilter>>
+  >({ all: {}, delayed: {} });
+  const [manualSortByView, setManualSortByView] = useState<
+    Record<DischargeView, ColumnSort | null>
+  >({ all: null, delayed: null });
+  const [openColumnMenu, setOpenColumnMenu] = useState<string | null>(null);
+  const [columnQueryRows, setColumnQueryRows] = useState<Patient[]>();
+  const [columnQueryLoading, setColumnQueryLoading] = useState(false);
+  const [columnQueryError, setColumnQueryError] = useState<unknown>(null);
+  const [columnQueryRevision, setColumnQueryRevision] = useState(0);
+  const columnScopeRef = useRef(scope);
+  const columnFilters = columnFiltersByView[view];
+  const manualSort = manualSortByView[view];
+  const columnFilterOData = useMemo(
+    () => buildColumnFiltersOData(columnFilters),
+    [columnFilters],
+  );
+
+  useEffect(() => {
+    if (columnScopeRef.current === scope) return;
+    columnScopeRef.current = scope;
+    setColumnFiltersByView({ all: {}, delayed: {} });
+    setManualSortByView({ all: null, delayed: null });
+    setOpenColumnMenu(null);
+  }, [scope]);
+
+  useEffect(() => {
+    setOpenColumnMenu(null);
+    setColumnQueryRows(undefined);
+    setColumnQueryError(null);
+    if (!columnFilterOData || !scope) {
+      setColumnQueryLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setColumnQueryLoading(true);
+    dischargeService
+      .listForColumnFilters(view, columnFilterOData, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted)
+          setColumnQueryRows(recordsForScope(result, scope));
+      })
+      .catch((reason) => {
+        if (!controller.signal.aborted) {
+          console.error("Column filter query failed", reason);
+          setColumnQueryError(reason);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setColumnQueryLoading(false);
+      });
+    return () => controller.abort();
+  }, [columnFilterOData, scope, view, columnQueryRevision, dataRevision]);
+
+  const cachedColumnRows = useMemo(
+    () => applyColumnFiltersLocally(rows, columnFilters),
+    [rows, columnFilters],
+  );
+  const sourceRows = columnFilterOData
+    ? (columnQueryRows ?? cachedColumnRows)
+    : rows;
+  const filteredRows = filterPatients(sourceRows, filters);
+  const defaultVisible =
+    view === "delayed" ? sortDelayedPatients(filteredRows) : filteredRows;
+  const visible = applyManualColumnSort(defaultVisible, manualSort);
+  const displayLoading = loading;
+  const displayError = error;
   const [page, setPage] = useState(1);
   const [scrollWidth, setScrollWidth] = useState(4644);
+  const [worklistViewportWidth, setWorklistViewportWidth] = useState(0);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [steps, setSteps] = useState<Record<string, Activity[]>>({});
@@ -139,7 +263,19 @@ export function WorklistPage({
   // Reset to first page when search/filter criteria change
   useEffect(() => {
     setPage(1);
-  }, [filters.search, filters.status, filters.dischargeDate]);
+  }, [
+    filters.search,
+    filters.status,
+    filters.dischargeDate,
+    filters.businessUnit,
+    filters.unit,
+    filters.dischargeType,
+    filters.dateFrom,
+    filters.dateTo,
+    columnFilters,
+    manualSort,
+    view,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -154,6 +290,7 @@ export function WorklistPage({
     if (!el) return;
     const updateWidth = () => {
       if (el.scrollWidth) setScrollWidth(el.scrollWidth);
+      if (el.clientWidth) setWorklistViewportWidth(el.clientWidth);
     };
     updateWidth();
     const observer = new ResizeObserver(updateWidth);
@@ -169,10 +306,20 @@ export function WorklistPage({
     if (worklistRef.current && topScrollRef.current) {
       isSyncingWorklist.current = true;
       worklistRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+      worklistRef.current.style.setProperty(
+        "--worklist-scroll-left",
+        `${topScrollRef.current.scrollLeft}px`,
+      );
     }
   };
 
   const handleWorklistScroll = () => {
+    if (worklistRef.current) {
+      worklistRef.current.style.setProperty(
+        "--worklist-scroll-left",
+        `${worklistRef.current.scrollLeft}px`,
+      );
+    }
     if (isSyncingWorklist.current) {
       isSyncingWorklist.current = false;
       return;
@@ -196,7 +343,7 @@ export function WorklistPage({
 
   useEffect(() => {
     let cancelled = false;
-    if (loading) return;
+    if (displayLoading) return;
     const timers = pagedRows.map((r, i) =>
       setTimeout(
         () => {
@@ -214,7 +361,57 @@ export function WorklistPage({
       cancelled = true;
       timers.forEach(clearTimeout);
     };
-  }, [rows, loading, filters.search, filters.status, filters.dischargeDate, currentPage]);
+  }, [
+    rows,
+    columnQueryRows,
+    displayLoading,
+    filters.search,
+    filters.status,
+    filters.dischargeDate,
+    filters.businessUnit,
+    filters.unit,
+    filters.dischargeType,
+    filters.dateFrom,
+    filters.dateTo,
+    view,
+    currentPage,
+  ]);
+
+  function cellValue(
+    row: Patient,
+    display: Record<string, string>,
+    current: Activity | undefined,
+    key: string,
+    activitiesLoaded = true,
+    waitingForHomeMedications = false,
+  ) {
+    if (key === "currentStep") {
+      if (!activitiesLoaded) return "Loading...";
+      if (waitingForHomeMedications)
+        return "Home Medications Preparation - Loading...";
+      return current?.crad2_subject || display.currentStep || "-";
+    }
+    if (key === "egyptBusinessUnit")
+      return egyptBusinessUnitFromEntityId(row.new_entityid) || "-";
+    if (key === "currentDischargeTAT")
+      return formatDuration(row.cr301_currentdischargetat);
+    if (key === "longestStepDuration")
+      return formatDuration(row.cr301_longeststepduration);
+    if (view === "delayed" && key === "physicianDischargeDate")
+      return (
+        displayDateTime(row, "and_physiciandischargedate", "") ||
+        display.physicianDischargeDate ||
+        "-"
+      );
+    return display[key] || "-";
+  }
+
+  function delayClass(minutes: unknown) {
+    const value = Number(minutes);
+    if (value > 480) return "delay-duration critical";
+    if (value > 240) return "delay-duration significant";
+    return "delay-duration delayed";
+  }
 
   async function toggle(id: string) {
     setExpanded((prev) => {
@@ -231,33 +428,123 @@ export function WorklistPage({
       }
   }
 
+  function applyColumnFilter(key: string, filter: ColumnFilter) {
+    setColumnFiltersByView((current) => ({
+      ...current,
+      [view]: { ...current[view], [key]: filter },
+    }));
+    setOpenColumnMenu(null);
+  }
+
+  function clearColumnFilter(key: string) {
+    setColumnFiltersByView((current) => {
+      const next = { ...current[view] };
+      delete next[key];
+      return { ...current, [view]: next };
+    });
+    setOpenColumnMenu(null);
+  }
+
+  function setColumnSort(key: string, direction: "asc" | "desc" | null) {
+    setManualSortByView((current) => ({
+      ...current,
+      [view]: direction ? { key, direction } : null,
+    }));
+    setOpenColumnMenu(null);
+  }
+
+  function refreshView() {
+    refresh();
+    if (columnFilterOData) setColumnQueryRevision((value) => value + 1);
+  }
+
   return (
     <section className="tab-panel">
-      {!loading && !error && (
-        <DashboardPage rows={visible} selectedDate={filters.dischargeDate} />
+      {canViewDelayed && (
+        <div
+          className="worklist-view-switch"
+          aria-label="Patient discharge view"
+        >
+          <button
+            type="button"
+            className={view === "all" ? "active" : ""}
+            aria-pressed={view === "all"}
+            onClick={() => setView("all")}
+          >
+            Patient Discharges
+          </button>
+          <button
+            type="button"
+            className={view === "delayed" ? "active" : ""}
+            aria-pressed={view === "delayed"}
+            onClick={() => setView("delayed")}
+          >
+            Delayed Cases
+          </button>
+        </div>
       )}
+      {!displayLoading &&
+        !displayError &&
+        (view === "delayed" ? (
+          <DelayedDashboardPage rows={visible} />
+        ) : (
+          <DashboardPage rows={visible} selectedDate={filters.dischargeDate} />
+        ))}
       <FilterBar
         filters={filters}
         change={setFilters}
-        refresh={refresh}
+        refresh={refreshView}
         rows={rows}
+        view={view}
       />
       {backgroundLoading && (
-        <div style={{ padding: "6px 12px", background: "rgba(30, 107, 72, 0.08)", borderLeft: "3px solid #1e6b48", margin: "8px 0", fontSize: "0.85rem", color: "#1e6b48" }}>
+        <div
+          style={{
+            padding: "6px 12px",
+            background: "rgba(30, 107, 72, 0.08)",
+            borderLeft: "3px solid #1e6b48",
+            margin: "8px 0",
+            fontSize: "0.85rem",
+            color: "#1e6b48",
+          }}
+        >
           {statusMessage || "Loading earlier records in background..."}
         </div>
       )}
-      {loading ? (
+      {columnFilterOData && columnQueryLoading && (
+        <div className="column-query-status" role="status">
+          Showing matches from loaded records while all Dataverse records are
+          checked...
+        </div>
+      )}
+      {columnFilterOData &&
+        Boolean(columnQueryError) &&
+        !columnQueryLoading && (
+          <div className="column-query-status column-query-error" role="alert">
+            <span>
+              Could not check all Dataverse records. Showing loaded matches.
+            </span>
+            <button
+              type="button"
+              onClick={() => setColumnQueryRevision((value) => value + 1)}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+      {displayLoading ? (
         <LoadingState
           message={
             statusMessage ||
-            (loaded
-              ? `Loading today's discharges... ${loaded.toLocaleString()} records retrieved.`
-              : "Loading today's discharges...")
+            (view === "delayed"
+              ? "Loading delayed discharge cases..."
+              : loaded
+                ? `Loading today's discharges... ${loaded.toLocaleString()} records retrieved.`
+                : "Loading today's discharges...")
           }
         />
-      ) : error ? (
-        <ErrorState error={error} retry={refresh} />
+      ) : displayError ? (
+        <ErrorState error={displayError} retry={refreshView} />
       ) : (
         <>
           <div className="worklist-desktop-view">
@@ -279,29 +566,88 @@ export function WorklistPage({
               ref={worklistRef}
               onScroll={handleWorklistScroll}
             >
-              {!visible.length ? (
-                <div className="empty-state">No active discharge cases found.</div>
+              {!visible.length && !Object.keys(columnFilters).length ? (
+                <div className="empty-state">
+                  {view === "delayed"
+                    ? "No delayed discharge cases found."
+                    : "No active discharge cases found."}
+                </div>
               ) : (
                 <table>
                   <thead>
                     <tr>
                       <th className="expand-cell" style={{ width: "44px" }} />
-                      {worklistColumns.map(([title, key]) => (
-                        <th key={title} style={{ width: columnWidths[key], minWidth: columnWidths[key] }}>
-                          {title}
-                        </th>
-                      ))}
+                      {columns.map(([title, key]) => {
+                        const definition = columnControlDefinitions[key];
+                        return (
+                          <th
+                            key={title}
+                            style={{
+                              width: columnWidths[key],
+                              minWidth: columnWidths[key],
+                            }}
+                          >
+                            {definition ? (
+                              <ColumnHeaderMenu
+                                definition={definition}
+                                filter={columnFilters[key]}
+                                sort={manualSort}
+                                open={openColumnMenu === key}
+                                onToggle={() =>
+                                  setOpenColumnMenu((current) =>
+                                    current === key ? null : key,
+                                  )
+                                }
+                                onApplyFilter={(filter) =>
+                                  applyColumnFilter(key, filter)
+                                }
+                                onClearFilter={() => clearColumnFilter(key)}
+                                onSort={(direction) =>
+                                  setColumnSort(key, direction)
+                                }
+                              />
+                            ) : (
+                              title
+                            )}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>
+                    {!pagedRows.length && (
+                      <tr>
+                        <td colSpan={columns.length + 1}>
+                          <div className="empty-state">
+                            No records match the active column filters.
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                     {pagedRows.map((r) => {
-                      const p = getPatientDisplayData(r) as Record<string, string>;
+                      const p = getPatientDisplayData(r) as Record<
+                        string,
+                        string
+                      >;
                       const id = r.crad2_patientdischargeid;
-                      const current = steps[id] && currentActivity(steps[id]);
+                      const activityState = steps[id]
+                        ? activitySequence(
+                            steps[id],
+                            false,
+                            Boolean(
+                              egyptBusinessUnitFromEntityId(r.new_entityid),
+                            ),
+                          )
+                        : undefined;
+                      const current = activityState?.current;
                       return (
                         <Fragment key={id}>
                           <tr
-                            className={truthy(p.delayed) ? "delayed" : ""}
+                            className={
+                              view === "delayed" || truthy(p.delayed)
+                                ? "delayed"
+                                : ""
+                            }
                             onClick={() => open(id)}
                           >
                             <td className="expand-cell">
@@ -321,15 +667,15 @@ export function WorklistPage({
                                 {expanded.has(id) ? "⌄" : "›"}
                               </button>
                             </td>
-                            {worklistColumns.map(([, key]) => {
-                              const val =
-                                key === "status"
-                                  ? p.status
-                                  : key === "patientName"
-                                    ? p.patientName
-                                    : key === "currentStep"
-                                      ? current?.crad2_subject || p.currentStep || "-"
-                                      : p[key] || "-";
+                            {columns.map(([, key]) => {
+                              const val = cellValue(
+                                r,
+                                p,
+                                current,
+                                key,
+                                Boolean(steps[id]),
+                                activityState?.waitingForHomeMedications,
+                              );
                               return (
                                 <td
                                   key={key}
@@ -338,9 +684,15 @@ export function WorklistPage({
                                     minWidth: columnWidths[key],
                                     maxWidth: columnWidths[key],
                                   }}
-                                  className={
-                                    key === "patientName" ? "patient-cell" : "small"
-                                  }
+                                  className={`${
+                                    key === "patientName"
+                                      ? "patient-cell"
+                                      : "small"
+                                  }${
+                                    key === "currentDischargeTAT"
+                                      ? ` ${delayClass(r.cr301_currentdischargetat)}`
+                                      : ""
+                                  }`}
                                   title={val !== "-" ? String(val) : undefined}
                                 >
                                   {key === "status" ? (
@@ -364,17 +716,29 @@ export function WorklistPage({
                           </tr>
                           {expanded.has(id) && (
                             <tr className="steps-row">
-                              <td colSpan={32}>
-                                {stepErrors[id] ? (
-                                  <ErrorState error={stepErrors[id]} />
-                                ) : steps[id] ? (
-                                  <ActivityTimeline
-                                    activities={steps[id]}
-                                    compact
-                                  />
-                                ) : (
-                                  <LoadingState message="Loading steps..." />
-                                )}
+                              <td colSpan={columns.length + 1}>
+                                <div
+                                  className="steps-sticky-panel"
+                                  style={
+                                    worklistViewportWidth
+                                      ? {
+                                          width: `${worklistViewportWidth - 2}px`,
+                                        }
+                                      : undefined
+                                  }
+                                >
+                                  {stepErrors[id] ? (
+                                    <ErrorState error={stepErrors[id]} />
+                                  ) : steps[id] ? (
+                                    <ActivityTimeline
+                                      activities={steps[id]}
+                                      compact
+                                      onOpen={() => open(id)}
+                                    />
+                                  ) : (
+                                    <LoadingState message="Loading steps..." />
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           )}
@@ -390,26 +754,67 @@ export function WorklistPage({
           {/* Mobile Patient Cards View (Visible on <= 768px screens) */}
           <div className="worklist-mobile-cards">
             {!visible.length ? (
-              <div className="empty-state">No active discharge cases found.</div>
+              <div className="empty-state">
+                {view === "delayed"
+                  ? "No delayed discharge cases found."
+                  : "No active discharge cases found."}
+              </div>
             ) : (
               pagedRows.map((r) => {
                 const p = getPatientDisplayData(r) as Record<string, string>;
                 const id = r.crad2_patientdischargeid;
-                const current = steps[id] && currentActivity(steps[id]);
+                const activityState = steps[id]
+                  ? activitySequence(
+                      steps[id],
+                      false,
+                      Boolean(egyptBusinessUnitFromEntityId(r.new_entityid)),
+                    )
+                  : undefined;
+                const current = activityState?.current;
                 const isExpanded = expanded.has(id);
+                const physicianDischargeDate = cellValue(
+                  r,
+                  p,
+                  current,
+                  "physicianDischargeDate",
+                );
+                const currentStep = cellValue(
+                  r,
+                  p,
+                  current,
+                  "currentStep",
+                  Boolean(steps[id]),
+                  activityState?.waitingForHomeMedications,
+                );
                 return (
                   <div
                     key={id}
-                    className={`mobile-patient-card ${truthy(p.delayed) ? "delayed" : ""}`}
+                    className={`mobile-patient-card ${
+                      view === "delayed" || truthy(p.delayed) ? "delayed" : ""
+                    }`}
                     onClick={() => open(id)}
                   >
                     <div className="mobile-card-header">
                       <div className="mobile-patient-info">
-                        <h3 className="mobile-patient-name">{p.patientName || "Unknown Patient"}</h3>
+                        <h3 className="mobile-patient-name">
+                          {p.patientName || "Unknown Patient"}
+                        </h3>
                         <div className="mobile-patient-meta">
-                          {p.patientId && <span className="mobile-meta-tag">MRN: <strong>{p.patientId}</strong></span>}
-                          {p.visitId && <span className="mobile-meta-tag">Visit: <strong>{p.visitId}</strong></span>}
-                          {p.room && <span className="mobile-meta-tag">Rm: <strong>{p.room}</strong></span>}
+                          {p.patientId && (
+                            <span className="mobile-meta-tag">
+                              MRN: <strong>{p.patientId}</strong>
+                            </span>
+                          )}
+                          {p.visitId && (
+                            <span className="mobile-meta-tag">
+                              Visit: <strong>{p.visitId}</strong>
+                            </span>
+                          )}
+                          {p.room && (
+                            <span className="mobile-meta-tag">
+                              Rm: <strong>{p.room}</strong>
+                            </span>
+                          )}
                         </div>
                       </div>
                       <StatusBadge label={p.status} />
@@ -418,29 +823,74 @@ export function WorklistPage({
                     <div className="mobile-card-body">
                       <div className="mobile-card-row">
                         <span className="mobile-card-label">Current Step:</span>
-                        <span className="mobile-card-value font-medium">{current?.crad2_subject || p.currentStep || "-"}</span>
+                        <span className="mobile-card-value font-medium">
+                          {currentStep}
+                        </span>
                       </div>
+                      {view === "delayed" && (
+                        <>
+                          <div className="mobile-card-row">
+                            <span className="mobile-card-label">
+                              Current TAT:
+                            </span>
+                            <span
+                              className={`mobile-card-value ${delayClass(
+                                r.cr301_currentdischargetat,
+                              )}`}
+                            >
+                              {formatDuration(r.cr301_currentdischargetat)}
+                            </span>
+                          </div>
+                          <div className="mobile-card-row">
+                            <span className="mobile-card-label">
+                              Longest Step:
+                            </span>
+                            <span className="mobile-card-value">
+                              {r.cr301_longeststep || "-"}
+                            </span>
+                          </div>
+                          <div className="mobile-card-row">
+                            <span className="mobile-card-label">
+                              Step Duration:
+                            </span>
+                            <span className="mobile-card-value">
+                              {formatDuration(r.cr301_longeststepduration)}
+                            </span>
+                          </div>
+                        </>
+                      )}
                       {p.physician && (
                         <div className="mobile-card-row">
                           <span className="mobile-card-label">Physician:</span>
-                          <span className="mobile-card-value">{p.physician}</span>
+                          <span className="mobile-card-value">
+                            {p.physician}
+                          </span>
                         </div>
                       )}
-                      {p.physicianDischargeDate && (
+                      {physicianDischargeDate !== "-" && (
                         <div className="mobile-card-row">
-                          <span className="mobile-card-label">Discharge Date:</span>
-                          <span className="mobile-card-value">{p.physicianDischargeDate}</span>
+                          <span className="mobile-card-label">
+                            Discharge Date:
+                          </span>
+                          <span className="mobile-card-value">
+                            {physicianDischargeDate}
+                          </span>
                         </div>
                       )}
                       {p.dischargeType && (
                         <div className="mobile-card-row">
                           <span className="mobile-card-label">Type:</span>
-                          <span className="mobile-card-value">{p.dischargeType}</span>
+                          <span className="mobile-card-value">
+                            {p.dischargeType}
+                          </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="mobile-card-actions" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="mobile-card-actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         type="button"
                         className="btn-mobile-details"
@@ -453,17 +903,28 @@ export function WorklistPage({
                         className="btn-mobile-steps"
                         onClick={() => void toggle(id)}
                       >
-                        <span>{isExpanded ? "Hide Steps" : "Timeline Steps"}</span>
-                        <span className="step-icon">{isExpanded ? "▲" : "▼"}</span>
+                        <span>
+                          {isExpanded ? "Hide Steps" : "Timeline Steps"}
+                        </span>
+                        <span className="step-icon">
+                          {isExpanded ? "▲" : "▼"}
+                        </span>
                       </button>
                     </div>
 
                     {isExpanded && (
-                      <div className="mobile-card-expanded" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="mobile-card-expanded"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {stepErrors[id] ? (
                           <ErrorState error={stepErrors[id]} />
                         ) : steps[id] ? (
-                          <ActivityTimeline activities={steps[id]} compact />
+                          <ActivityTimeline
+                            activities={steps[id]}
+                            compact
+                            onOpen={() => open(id)}
+                          />
                         ) : (
                           <LoadingState message="Loading steps..." />
                         )}
@@ -513,7 +974,7 @@ export function WorklistPage({
                       >
                         {p}
                       </button>
-                    )
+                    ),
                   )}
                 </div>
 
@@ -541,4 +1002,3 @@ export function WorklistPage({
     </section>
   );
 }
-

@@ -5,8 +5,19 @@ import { allPages, escapeOData, unwrap } from "./data";
 import { getItemOrg, listRecordsOrg } from "./dataverseAdapter";
 import { getPatientDisplayData } from "../presentation/reference";
 import { dateKey } from "../presentation/format";
+import type { EgyptBusinessUnitEntityId } from "../scope/scope";
 
 export type Patient = Crad2_patientdischarges;
+export type DischargeView = "all" | "delayed";
+
+export const DELAYED_EGYPT_FILTER =
+  "cr301_currentdischargetat gt 120 and (new_entityid eq '1' or new_entityid eq '2' or new_entityid eq '4')";
+
+export function columnFilterForView(view: DischargeView, columnFilter: string) {
+  return view === "delayed"
+    ? `(${DELAYED_EGYPT_FILTER}) and (${columnFilter})`
+    : columnFilter;
+}
 
 const select = selectFields(tables.patient, [
   ...Object.values(CONFIG.fields),
@@ -16,15 +27,40 @@ const select = selectFields(tables.patient, [
   "owneridname",
   "owneridtype",
   "modifiedon",
+  "versionnumber",
   "statecode",
   "statuscode",
   "new_gender",
+  "new_entityid",
 ]);
+
+const DEFAULT_PATIENT_ORDER = [
+  "new_lastactivity desc",
+  "modifiedon desc",
+  "createdon desc",
+  "crad2_patientdischargeid asc",
+];
 
 export function getLocalDateRangeISO(daysAgo = 0) {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo, 0, 0, 0, 0);
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo + 1, 0, 0, 0, 0);
+  const start = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - daysAgo,
+    0,
+    0,
+    0,
+    0,
+  );
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - daysAgo + 1,
+    0,
+    0,
+    0,
+    0,
+  );
   return {
     startISO: start.toISOString(),
     endISO: end.toISOString(),
@@ -45,7 +81,10 @@ export function getDateRangeFromStrISO(dateStr: string) {
   };
 }
 
-export function mergeAndSortPatients(existing: Patient[], incoming: Patient[]): Patient[] {
+export function mergeAndSortPatients(
+  existing: Patient[],
+  incoming: Patient[],
+): Patient[] {
   const map = new Map<string, Patient>();
   for (const r of existing) {
     if (r.crad2_patientdischargeid) {
@@ -54,11 +93,38 @@ export function mergeAndSortPatients(existing: Patient[], incoming: Patient[]): 
   }
   for (const r of incoming) {
     if (r.crad2_patientdischargeid) {
-      map.set(r.crad2_patientdischargeid, r);
+      const previous = map.get(r.crad2_patientdischargeid);
+      map.set(
+        r.crad2_patientdischargeid,
+        previous && patientVersion(previous) > patientVersion(r) ? previous : r,
+      );
     }
   }
-  return Array.from(map.values()).sort(
-    (a, b) => Date.parse(b.createdon || "") - Date.parse(a.createdon || "")
+  return sortPatientsByLatestActivity(map.values());
+}
+
+function timestamp(value: string | undefined) {
+  const parsed = Date.parse(value || "");
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function patientVersion(row: Patient) {
+  return Number(row.versionnumber || 0) || timestamp(row.modifiedon);
+}
+
+export function latestPatientActivityTime(row: Patient) {
+  return (
+    timestamp(row.new_lastactivity) ||
+    timestamp(row.modifiedon) ||
+    timestamp(row.createdon)
+  );
+}
+
+export function sortPatientsByLatestActivity(rows: Iterable<Patient>) {
+  return Array.from(rows).sort(
+    (a, b) =>
+      latestPatientActivityTime(b) - latestPatientActivityTime(a) ||
+      a.crad2_patientdischargeid.localeCompare(b.crad2_patientdischargeid),
   );
 }
 
@@ -73,30 +139,65 @@ export const dischargeService = {
     const filter = `createdon ge ${startISO} and createdon lt ${endISO}`;
     const rows = await allPages(
       (opts) => listRecordsOrg<Patient>(tables.patient, opts),
-      { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
+      {
+        select,
+        filter,
+        orderBy: [
+          "new_lastactivity desc",
+          "modifiedon desc",
+          "createdon desc",
+          "crad2_patientdischargeid asc",
+        ],
+      },
       signal,
       onProgress,
     );
     return mergeAndSortPatients([], rows);
   },
 
-  async listForDay(daysAgo: number, signal?: AbortSignal, onProgress?: (loaded: number) => void) {
+  async listForDay(
+    daysAgo: number,
+    signal?: AbortSignal,
+    onProgress?: (loaded: number) => void,
+  ) {
     const { startISO, endISO } = getLocalDateRangeISO(daysAgo);
     const filter = `createdon ge ${startISO} and createdon lt ${endISO}`;
     const rows = await allPages(
       (opts) => listRecordsOrg<Patient>(tables.patient, opts),
-      { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
+      {
+        select,
+        filter,
+        orderBy: [
+          "new_lastactivity desc",
+          "modifiedon desc",
+          "createdon desc",
+          "crad2_patientdischargeid asc",
+        ],
+      },
       signal,
       onProgress,
     );
     return mergeAndSortPatients([], rows);
   },
 
-  async listOlderThan(beforeISO: string, signal?: AbortSignal, onProgress?: (loaded: number) => void) {
+  async listOlderThan(
+    beforeISO: string,
+    signal?: AbortSignal,
+    onProgress?: (loaded: number) => void,
+  ) {
     const filter = `createdon lt ${beforeISO}`;
     const rows = await allPages(
       (opts) => listRecordsOrg<Patient>(tables.patient, opts),
-      { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
+      {
+        select,
+        filter,
+        orderBy: [
+          "new_lastactivity desc",
+          "modifiedon desc",
+          "createdon desc",
+          "crad2_patientdischargeid asc",
+        ],
+      },
       signal,
       onProgress,
     );
@@ -109,7 +210,16 @@ export const dischargeService = {
     const filter = `createdon ge ${range.startISO} and createdon lt ${range.endISO}`;
     const rows = await allPages(
       (opts) => listRecordsOrg<Patient>(tables.patient, opts),
-      { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
+      {
+        select,
+        filter,
+        orderBy: [
+          "new_lastactivity desc",
+          "modifiedon desc",
+          "createdon desc",
+          "crad2_patientdischargeid asc",
+        ],
+      },
       signal,
     );
     return mergeAndSortPatients([], rows);
@@ -120,27 +230,83 @@ export const dischargeService = {
     const filter = buildSearchFilter(term);
     const rows = await allPages(
       (opts) => listRecordsOrg<Patient>(tables.patient, opts),
-      { select, filter, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
+      {
+        select,
+        filter,
+        orderBy: [
+          "new_lastactivity desc",
+          "modifiedon desc",
+          "createdon desc",
+          "crad2_patientdischargeid asc",
+        ],
+      },
       signal,
     );
     return mergeAndSortPatients([], rows);
   },
 
-  async list(signal?: AbortSignal, onProgress?: (loaded: number) => void) {
-    return (
-      await allPages(
-        (opts) => listRecordsOrg<Patient>(tables.patient, opts),
-        { select, orderBy: ["createdon desc", "crad2_patientdischargeid asc"] },
-        signal,
-        onProgress,
-      )
-    ).sort(
-      (a, b) => Date.parse(b.createdon || "") - Date.parse(a.createdon || ""),
+  async listDelayedEgypt(
+    signal?: AbortSignal,
+    onProgress?: (loaded: number) => void,
+  ) {
+    const rows = await allPages(
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
+      {
+        select,
+        filter: DELAYED_EGYPT_FILTER,
+        orderBy: [
+          "cr301_currentdischargetat desc",
+          "crad2_patientdischargeid asc",
+        ],
+      },
+      signal,
+      onProgress,
     );
+    return sortDelayedPatients(rows.filter(isDelayedEgyptPatient));
+  },
+
+  async listForColumnFilters(
+    view: DischargeView,
+    columnFilter: string,
+    signal?: AbortSignal,
+  ) {
+    if (!columnFilter) return [];
+    const filter = columnFilterForView(view, columnFilter);
+    const rows = await allPages(
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
+      {
+        select,
+        filter,
+        orderBy:
+          view === "delayed"
+            ? ["cr301_currentdischargetat desc", "crad2_patientdischargeid asc"]
+            : DEFAULT_PATIENT_ORDER,
+      },
+      signal,
+    );
+    return view === "delayed"
+      ? sortDelayedPatients(rows.filter(isDelayedEgyptPatient))
+      : mergeAndSortPatients([], rows);
+  },
+
+  async list(signal?: AbortSignal, onProgress?: (loaded: number) => void) {
+    const rows = await allPages(
+      (opts) => listRecordsOrg<Patient>(tables.patient, opts),
+      {
+        select,
+        orderBy: DEFAULT_PATIENT_ORDER,
+      },
+      signal,
+      onProgress,
+    );
+    return sortPatientsByLatestActivity(rows);
   },
 
   async get(id: string) {
-    return unwrap(await getItemOrg<Patient>(tables.patient, guid(id), { select }), "Loading patient");
+    return unwrap(
+      await getItemOrg<Patient>(tables.patient, guid(id), { select }),
+      "Loading patient",
+    );
   },
 };
 
@@ -148,17 +314,59 @@ export interface Filters {
   search: string;
   status: string;
   dischargeDate: string;
+  businessUnit: "" | EgyptBusinessUnitEntityId;
+  unit: string;
+  dischargeType: string;
+  dateFrom: string;
+  dateTo: string;
+}
+
+export function isDelayedEgyptPatient(row: Patient) {
+  return (
+    ["1", "2", "4"].includes(String(row.new_entityid ?? "").trim()) &&
+    Number(row.cr301_currentdischargetat) > 120
+  );
+}
+
+export function sortDelayedPatients(rows: Patient[]) {
+  return [...rows].sort(
+    (a, b) =>
+      Number(b.cr301_currentdischargetat || 0) -
+      Number(a.cr301_currentdischargetat || 0),
+  );
 }
 
 export function filterPatients(rows: Patient[], filters: Filters) {
   return rows.filter((r) => {
+    if (
+      filters.businessUnit !== "" &&
+      String(r.new_entityid ?? "").trim() !== filters.businessUnit
+    )
+      return false;
     if (filters.status !== "" && String(r.crad2_status) !== filters.status)
+      return false;
+    if (filters.unit && String(r.new_nursestation || "") !== filters.unit)
+      return false;
+    if (
+      filters.dischargeType &&
+      String(r.and_dischargetype || "") !== filters.dischargeType
+    )
       return false;
     if (
       filters.dischargeDate &&
       dateKey(r.crad2_dischargedate || r.and_physiciandischargedate) !==
         filters.dischargeDate
     )
+      return false;
+    const physicianDate = dateKey(
+      r.and_physiciandischargedate || r.crad2_dischargedate,
+    );
+    if (
+      filters.dateFrom &&
+      (!physicianDate || physicianDate < filters.dateFrom)
+    )
+      return false;
+    if (filters.dateTo && (!physicianDate || physicianDate > filters.dateTo))
       return false;
     return (
       !filters.search.trim() ||
@@ -171,4 +379,3 @@ export function filterPatients(rows: Patient[], filters: Filters) {
 }
 
 export { select as patientSelect };
-

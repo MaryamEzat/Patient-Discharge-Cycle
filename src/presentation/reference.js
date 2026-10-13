@@ -74,6 +74,19 @@ export function getPatientDisplayData(r) {
       CONFIG.patientFieldAliases.fileScanStatus,
       "",
     ),
+    currentDischargeTAT: displayValue(
+      r,
+      CONFIG.fields.currentDischargeTAT,
+      null,
+      "",
+    ),
+    longestStep: displayValue(r, CONFIG.fields.longestStep, null, ""),
+    longestStepDuration: displayValue(
+      r,
+      CONFIG.fields.longestStepDuration,
+      null,
+      "",
+    ),
     lastActivity:
       displayDateTime(r, CONFIG.fields.lastActivity, "") ||
       displayValue(r, CONFIG.fields.lastActivity, null, ""),

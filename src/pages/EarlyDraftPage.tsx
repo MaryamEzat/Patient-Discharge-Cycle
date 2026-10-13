@@ -1,3 +1,4 @@
+import { ResponsiveSelect } from "../components/ResponsiveSelect";
 import { useEffect, useState } from "react";
 import {
   earlyDischargeService,
@@ -19,6 +20,7 @@ import { tables } from "../config/schema";
 import { LoadingState } from "../components/LoadingState";
 import { ErrorState, errorMessage } from "../components/ErrorState";
 import { StatusBadge } from "../components/StatusBadge";
+import { useScope } from "../scope/ScopeContext";
 export function EarlyDraftPage({
   id,
   revision,
@@ -28,6 +30,7 @@ export function EarlyDraftPage({
   revision: number;
   back: () => void;
 }) {
+  const { value: scope } = useScope();
   const draft = useResource(
     () => earlyDischargeService.get(id),
     [id, revision],
@@ -52,8 +55,8 @@ export function EarlyDraftPage({
     setSearchState("Searching inpatients...");
     const t = setTimeout(
       () =>
-        earlyDischargeService
-          .search(query.trim())
+        scope && earlyDischargeService
+          .search(query.trim(), scope)
           .then((rows) => {
             if (active) {
               setResults(rows);
@@ -72,7 +75,7 @@ export function EarlyDraftPage({
       active = false;
       clearTimeout(t);
     };
-  }, [query, type, submitted]);
+  }, [query, type, submitted, scope]);
   async function add() {
     if (!selected || !draft.data || busy) return;
     setBusy(true);
@@ -241,12 +244,12 @@ export function EarlyDraftPage({
                 <label className="label" htmlFor="earlyType">
                   Discharge Type
                 </label>
-                <select
+                <ResponsiveSelect
                   id="earlyType"
                   disabled={submitted || busy}
                   value={type}
-                  onChange={(e) => {
-                    setType(e.target.value);
+                  onValueChange={(value) => {
+                    setType(value);
                     setQuery("");
                     setSelected(undefined);
                   }}
@@ -254,7 +257,7 @@ export function EarlyDraftPage({
                   <option value="">Select type</option>
                   <option value="1">Early</option>
                   <option value="2">Planned</option>
-                </select>
+                </ResponsiveSelect>
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="earlySearch">
@@ -347,6 +350,7 @@ export function EarlyDraftPage({
               </div>
             ) : (
               <div className="draft-existing">
+                <div className="worklist-desktop-view">
                 <table className="worklist-table">
                   <thead>
                     <tr>
@@ -399,6 +403,25 @@ export function EarlyDraftPage({
                     })}
                   </tbody>
                 </table>
+                </div>
+                <div className="worklist-mobile-cards">
+                  {patients.data.map((row) => {
+                    const p = getEarlyPatientDisplayData(row) as Record<string, string>;
+                    return <article className="mobile-patient-card" key={row.and_earlydischarge_ipdvisitsid}>
+                      <strong className="mobile-patient-name">{p.patientName || "-"}</strong>
+                      <dl className="early-card-details">
+                        {[
+                          ["dischargeType", "Discharge Type"], ["patientCode", "Patient Code"],
+                          ["visitId", "Visit ID"], ["room", "Room"], ["bed", "Bed"],
+                          ["nurseStation", "Nurse Station"], ["physician", "Physician"],
+                          ["admissionDoctor", "Admission Doctor"], ["specialty", "Specialty"],
+                          ["admissionDate", "Admission Date"], ["cancellationReason", "Cancellation Reason"],
+                          ["isSubmitted", "Submitted"],
+                        ].map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{p[key] || "-"}</dd></div>)}
+                      </dl>
+                    </article>;
+                  })}
+                </div>
               </div>
             )}
           </div>

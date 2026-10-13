@@ -1,5 +1,10 @@
 import type { Patient } from "../services/dischargeService";
-import { dateKey, truthy, type Row } from "../presentation/format";
+import {
+  dateKey,
+  formatDuration,
+  truthy,
+  type Row,
+} from "../presentation/format";
 
 export function getTodayDateKey() {
   const now = new Date();
@@ -53,6 +58,35 @@ export function DashboardPage({
         <div className="kpi" key={label}>
           <div className="kpi-title">{label}</div>
           <div className="kpi-value">{values[i]}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DelayedDashboardPage({ rows }: { rows: Patient[] }) {
+  const longestDelay = rows.reduce(
+    (highest, row) =>
+      Math.max(highest, Number(row.cr301_currentdischargetat) || 0),
+    0,
+  );
+  const values = [
+    rows.length.toLocaleString(),
+    rows.filter((row) => row.crad2_status === 408520001).length.toLocaleString(),
+    rows.filter((row) => row.crad2_status === 408520002).length.toLocaleString(),
+    formatDuration(longestDelay),
+  ];
+  return (
+    <div className="kpi-grid">
+      {[
+        "Delayed Cases",
+        "In Progress Delays",
+        "Completed Delayed",
+        "Longest Delay",
+      ].map((label, index) => (
+        <div className="kpi" key={label}>
+          <div className="kpi-title">{label}</div>
+          <div className="kpi-value">{values[index]}</div>
         </div>
       ))}
     </div>

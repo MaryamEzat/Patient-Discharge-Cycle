@@ -194,6 +194,13 @@
           "x-ms-read-only": true,
           "maxLength": 4000
         },
+        "cr301_currentdischargetat": {
+          "type": "string",
+          "title": "Current Discharge TAT",
+          "x-ms-dataverse-attribute": "cr301_currentdischargetat",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "cr301_CurrentDischargeTAT"
+        },
         "cr301_filedeliverydatetime": {
           "type": "string",
           "title": "File Delivery Date Time",
@@ -209,6 +216,21 @@
           "x-ms-schema-name": "cr301_FileScanStatus",
           "x-ms-read-only": true,
           "maxLength": 4000
+        },
+        "cr301_longeststep": {
+          "type": "string",
+          "title": "Longest Step",
+          "x-ms-dataverse-attribute": "cr301_longeststep",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "cr301_LongestStep",
+          "maxLength": 100
+        },
+        "cr301_longeststepduration": {
+          "type": "string",
+          "title": "Longest Step Duration",
+          "x-ms-dataverse-attribute": "cr301_longeststepduration",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "cr301_LongestStepDuration"
         },
         "cr301_patientnationality": {
           "type": "string",

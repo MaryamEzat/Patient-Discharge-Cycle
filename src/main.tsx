@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { Component, type ReactNode } from "react";
 import App from "./App";
+import { ScopeProvider } from "./scope/ScopeContext";
 import "./styles/app.css";
 class AppBoundary extends Component<
   { children: ReactNode },
@@ -26,6 +27,8 @@ class AppBoundary extends Component<
 }
 createRoot(document.getElementById("root")!).render(
   <AppBoundary>
-    <App />
+    <ScopeProvider>
+      <App />
+    </ScopeProvider>
   </AppBoundary>,
 );

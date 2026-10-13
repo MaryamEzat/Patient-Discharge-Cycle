@@ -6,8 +6,11 @@ import {
 } from "../services/workflowPollingService";
 import {
   activityService,
+  activityRules,
+  activitySequence,
   buildActivityPayload,
-  currentActivity,
+  hasHomeMedicationsActivity,
+  HOME_MEDICATION_DISPENSING_YES,
   type ActivityInput,
 } from "../services/activityService";
 import { tables } from "../config/schema";
@@ -21,6 +24,7 @@ import { LoadingState } from "../components/LoadingState";
 import { ErrorState, errorMessage } from "../components/ErrorState";
 import { RecordLink } from "../components/RecordLink";
 import { Modal } from "../components/Modal";
+import { egyptBusinessUnitFromEntityId } from "../scope/scope";
 export function PatientWorkspacePage({
   id,
   back,
@@ -39,9 +43,28 @@ export function PatientWorkspacePage({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [formVersion, setFormVersion] = useState(0);
+  const [expectHomeMedications, setExpectHomeMedications] = useState(false);
   const cancellation = useRef<AbortController | undefined>(undefined);
   useEffect(() => () => cancellation.current?.abort(), [id]);
-  const active = resource.data && currentActivity(resource.data.activities);
+  const isEgyptPatient = Boolean(
+    egyptBusinessUnitFromEntityId(resource.data?.parent.new_entityid),
+  );
+  const sequence = resource.data
+    ? activitySequence(
+        resource.data.activities,
+        expectHomeMedications,
+        isEgyptPatient,
+      )
+    : { current: undefined, waitingForHomeMedications: false };
+  const active = sequence.current;
+  useEffect(() => {
+    if (
+      expectHomeMedications &&
+      resource.data &&
+      hasHomeMedicationsActivity(resource.data.activities)
+    )
+      setExpectHomeMedications(false);
+  }, [expectHomeMedications, resource.data]);
   async function save(input: ActivityInput) {
     if (!active || busy) return;
     const controller = new AbortController();
@@ -49,8 +72,15 @@ export function PatientWorkspacePage({
     cancellation.current = controller;
     setBusy(true);
     let saved = false;
+    const waitForHomeMedications =
+      activityRules(active).initiation &&
+      input.action === "408520000" &&
+      Number(input.homeMedicationDispensingRequired) ===
+        HOME_MEDICATION_DISPENSING_YES &&
+      isEgyptPatient;
     try {
       buildActivityPayload(active, input);
+      if (waitForHomeMedications) setExpectHomeMedications(true);
       const before = await captureDischargeWorkflowState(id);
       controller.signal.throwIfAborted();
       await activityService.save(active, input);
@@ -62,10 +92,13 @@ export function PatientWorkspacePage({
       const baseline = await captureDischargeWorkflowState(id);
       controller.signal.throwIfAborted();
       resource.setData(baseline);
-      if (
+      const workflowChanged =
         workflowSignal(before, active.crad2_dischargeactivityid) !==
-        workflowSignal(baseline, active.crad2_dischargeactivityid)
-      ) {
+        workflowSignal(baseline, active.crad2_dischargeactivityid);
+      const expectedActivityLoaded =
+        !waitForHomeMedications ||
+        hasHomeMedicationsActivity(baseline.activities);
+      if (workflowChanged && expectedActivityLoaded) {
         setMessage("");
       } else {
         const result = await pollDischargeWorkflow(
@@ -74,6 +107,12 @@ export function PatientWorkspacePage({
           active.crad2_dischargeactivityid,
           resource.setData,
           controller.signal,
+          waitForHomeMedications
+            ? {
+                acceptChange: (snapshot) =>
+                  hasHomeMedicationsActivity(snapshot.activities),
+              }
+            : undefined,
         );
         setMessage(
           result.changed
@@ -87,6 +126,8 @@ export function PatientWorkspacePage({
       onChanged();
     } catch (e) {
       if (!controller.signal.aborted) {
+        if (!saved && waitForHomeMedications)
+          setExpectHomeMedications(false);
         console.error("Activity operation failed", e);
         setMessage(
           saved
@@ -135,11 +176,30 @@ export function PatientWorkspacePage({
       <div className="patient-body">
         <PatientIdentity patient={snapshot.parent} />
         <section className="patient-main">
-          <DischargeState activity={active} />
+          <DischargeState
+            activity={active}
+            waitingForHomeMedications={
+              sequence.waitingForHomeMedications
+            }
+          />
           <div className="timeline">
-            <ActivityTimeline activities={snapshot.activities} />
+            <ActivityTimeline
+              activities={snapshot.activities}
+              currentActivityId={
+                sequence.waitingForHomeMedications
+                  ? null
+                  : active?.crad2_dischargeactivityid
+              }
+            />
           </div>
-          {active ? (
+          {sequence.waitingForHomeMedications ? (
+            <div className="activity-form">
+              <LoadingState
+                message="Waiting for Home Medications Preparation..."
+                subtitle="The workflow is creating the required activity. This view will update automatically."
+              />
+            </div>
+          ) : active ? (
             <ActivityPanel
               key={`${active.crad2_dischargeactivityid}-${active.modifiedon || ""}-${formVersion}-${revision}`}
               activity={active}
@@ -155,7 +215,13 @@ export function PatientWorkspacePage({
       </div>
       {message && (
         <Modal
-          title={busy ? "Updating Activity" : "Activity Saved"}
+          title={
+            busy
+              ? "Updating Activity"
+              : message.toLowerCase().startsWith("activity saved")
+                ? "Activity Saved"
+                : "Activity Update Failed"
+          }
           close={busy ? undefined : () => setMessage("")}
         >
           {busy ? (

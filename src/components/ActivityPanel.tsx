@@ -1,5 +1,8 @@
+import { ResponsiveSelect } from "./ResponsiveSelect";
+import { ResponsiveDatePicker } from "./ResponsiveDatePicker";
 import { useState, type ReactNode } from "react";
 import {
+  activityBusinessRules,
   activityRules,
   activityService,
   searchDelayReasons,
@@ -37,10 +40,10 @@ function Select({
   options: Record<string, string>;
 }) {
   return (
-    <select
+    <ResponsiveSelect
       aria-label={label}
       value={value}
-      onChange={(e) => change(e.target.value)}
+      onValueChange={change}
     >
       <option value="">---</option>
       {Object.entries(options).map(([v, name]) => (
@@ -48,7 +51,7 @@ function Select({
           {name}
         </option>
       ))}
-    </select>
+    </ResponsiveSelect>
   );
 }
 export function ActivityPanel({
@@ -67,10 +70,19 @@ export function ActivityPanel({
     action: "",
     instructions: "",
     pharmacyReturn: "",
+    withDues:
+      typeof activity.cr301_withdues === "number"
+        ? String(activity.cr301_withdues)
+        : "",
+    homeMedicationDispensingRequired:
+      typeof activity.cr301_homemedicationdispensingrequired === "number"
+        ? String(activity.cr301_homemedicationdispensingrequired)
+        : "",
     followUp: "",
     comment: activity.new_comment || "",
     physical: {},
   });
+  const businessRules = activityBusinessRules(activity, input.action);
   const [fileBusy, setFileBusy] = useState(false);
   const [message, setMessage] = useState("");
   const set = <K extends keyof ActivityInput>(
@@ -153,11 +165,10 @@ export function ActivityPanel({
                 />
               </Field>
               <Field label="Follow Up Date">
-                <input
-                  aria-label="Follow Up Date"
-                  type="date"
+                <ResponsiveDatePicker
+                  label="Follow Up Date"
                   value={input.followUp}
-                  onChange={(e) => set("followUp", e.target.value)}
+                  onChange={(value) => set("followUp", value)}
                 />
               </Field>
             </>
@@ -170,6 +181,29 @@ export function ActivityPanel({
               options={choiceOptions(tables.activity, "crad2_status")}
             />
           </Field>
+          {businessRules.withDues && (
+            <Field label="With dues *">
+              <Select
+                label="With dues"
+                value={input.withDues}
+                change={(v) => set("withDues", v)}
+                options={choiceOptions(tables.activity, "cr301_withdues")}
+              />
+            </Field>
+          )}
+          {businessRules.homeMedicationDispensing && (
+            <Field label="Home Medication Dispensing? *">
+              <Select
+                label="Home Medication Dispensing"
+                value={input.homeMedicationDispensingRequired}
+                change={(v) => set("homeMedicationDispensingRequired", v)}
+                options={choiceOptions(
+                  tables.activity,
+                  "cr301_homemedicationdispensingrequired",
+                )}
+              />
+            </Field>
+          )}
           {rules.delay && (
             <Field label="Delay Reason *">
               <LookupInput

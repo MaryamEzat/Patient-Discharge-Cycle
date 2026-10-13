@@ -51,7 +51,10 @@ export interface Crad2_patientdischargesBase {
   and_homemedicationtime?: string;
   and_ishomemedication?: boolean;
   "and_PatientCode@odata.bind"?: string;
+  cr301_currentdischargetat?: number;
   cr301_filedeliverydatetime?: string;
+  cr301_longeststep?: string;
+  cr301_longeststepduration?: number;
   cr301_patientnationality?: string;
   "cr603_Patient@odata.bind"?: string;
   crad2_admissiondate?: string;

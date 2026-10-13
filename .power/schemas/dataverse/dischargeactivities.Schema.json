@@ -202,12 +202,83 @@
           "x-ms-read-only": true,
           "maxLength": 160
         },
+        "cr301_entityid": {
+          "type": "string",
+          "title": "EntityID",
+          "x-ms-dataverse-attribute": "cr301_entityid",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "cr301_EntityID",
+          "x-ms-read-only": true,
+          "maxLength": 4000
+        },
+        "cr301_homemedicationdispensingrequired": {
+          "type": "string",
+          "title": "Home Medication Dispensing?",
+          "x-ms-dataverse-attribute": "cr301_homemedicationdispensingrequired",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "cr301_HomeMedicationDispensingRequired",
+          "enum": [
+            "Yes",
+            "No"
+          ],
+          "x-ms-enum-values": [
+            293170000,
+            293170001
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "38ba3874-60c1-f111-aaad-7c1e52211560",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Home Medication Dispensing Required?",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "cr301_homemedicationdispensingrequiredname": {
+          "type": "string",
+          "title": "cr301_homemedicationdispensingrequiredname",
+          "x-ms-dataverse-attribute": "cr301_homemedicationdispensingrequiredname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "cr301_homemedicationdispensingrequiredName",
+          "x-ms-read-only": true
+        },
         "cr301_maxdischargedate": {
           "type": "string",
           "title": "MaxDischargeDate",
           "x-ms-dataverse-attribute": "cr301_maxdischargedate",
           "x-ms-dataverse-type": "DateTimeType",
           "x-ms-schema-name": "cr301_MaxDischargeDate",
+          "x-ms-read-only": true
+        },
+        "cr301_withdues": {
+          "type": "string",
+          "title": "Cleared with dues?",
+          "x-ms-dataverse-attribute": "cr301_withdues",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "cr301_Withdues",
+          "enum": [
+            "Yes",
+            "No"
+          ],
+          "x-ms-enum-values": [
+            293170000,
+            293170001
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "c8e8b6f1-85c1-f111-aaad-7c1e52211560",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "With dues ",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "cr301_withduesname": {
+          "type": "string",
+          "title": "cr301_withduesname",
+          "x-ms-dataverse-attribute": "cr301_withduesname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "cr301_withduesName",
           "x-ms-read-only": true
         },
         "crad2_actiondate": {

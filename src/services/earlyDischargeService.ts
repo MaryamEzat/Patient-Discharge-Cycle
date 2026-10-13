@@ -13,6 +13,7 @@ import {
   listRecordsOrg,
   updateRecordOrg,
 } from "./dataverseAdapter";
+import { recordsForScope, type Scope } from "../scope/scope";
 export type Draft = And_earlydischarges;
 export type Inpatient = And_inpatientlists;
 export type EarlyPatient = And_earlydischarge_ipdvisitses & {
@@ -20,7 +21,7 @@ export type EarlyPatient = And_earlydischarge_ipdvisitses & {
 };
 const draftSelect = selectFields(
   tables.early,
-  Object.values(CONFIG.earlyFields),
+  [...Object.values(CONFIG.earlyFields), "_owningbusinessunit_value"],
 );
 const childSelect = selectFields(tables.earlyChild, [
   ...Object.values(CONFIG.earlyIpdFields),
@@ -30,14 +31,15 @@ const childSelect = selectFields(tables.earlyChild, [
 const inpatientSelect = selectFields(tables.inpatient, [
   ...Object.values(CONFIG.inpatientFields),
   ...Object.values(CONFIG.inpatientAliases).flat(),
+  "_owningbusinessunit_value",
 ]);
 export const isSubmitted = (draft: Draft) => draft.and_statusnew === 1;
 export const earlyDischargeService = {
-  async list() {
-    const drafts = await allPages((opts) => listRecordsOrg<Draft>(tables.early, opts), {
+  async list(scope: Scope) {
+    const drafts = recordsForScope(await allPages((opts) => listRecordsOrg<Draft>(tables.early, opts), {
       select: draftSelect,
       orderBy: ["and_dischargedate desc"],
-    });
+    }), scope);
     try {
       const children = await allPages((opts) => listRecordsOrg<And_earlydischarge_ipdvisitses>(tables.earlyChild, opts), {
         select: [
@@ -96,13 +98,13 @@ export const earlyDischargeService = {
       })),
     );
   },
-  async search(query: string) {
+  async search(query: string, scope: Scope) {
     const fields = selectFields(tables.inpatient, [
       "and_name",
       "and_patientname",
       "and_visitid",
     ]);
-    return unwrap(
+    return recordsForScope(unwrap(
       await listRecordsOrg<Inpatient>(tables.inpatient, {
         select: inpatientSelect,
         filter: fields
@@ -111,7 +113,7 @@ export const earlyDischargeService = {
         top: 25,
       }),
       "Searching inpatients",
-    );
+    ), scope);
   },
   async add(draft: Draft, patient: Inpatient, type: string) {
     if (!["1", "2"].includes(type))

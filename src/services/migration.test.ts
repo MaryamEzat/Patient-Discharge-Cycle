@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { allPages, unwrap } from "./data";
 import {
+  activityBusinessRules,
+  activitySequence,
   buildActivityPayload,
+  HOME_MEDICATION_DISPENSING_YES,
   type Activity,
   type ActivityInput,
 } from "./activityService";
@@ -25,6 +28,8 @@ const input = (): ActivityInput => ({
   action: "408520000",
   instructions: "",
   pharmacyReturn: "",
+  withDues: "",
+  homeMedicationDispensingRequired: "",
   followUp: "",
   comment: "",
   physical: {},
@@ -70,6 +75,53 @@ describe("complete paging", () => {
   });
 });
 describe("activity business validation", () => {
+  it("applies the With dues business rule and saves its value", () => {
+    const a = {
+      ...activity("Financial Discharge"),
+      "_ownerid_value@OData.Community.Display.V1.FormattedValue":
+        "Egypt Finance",
+    } as Activity;
+    expect(activityBusinessRules(a, "408520000").withDues).toBe(true);
+    expect(() => buildActivityPayload(a, input())).toThrow("With dues");
+    expect(
+      buildActivityPayload(a, { ...input(), withDues: "293170000" })[
+        "cr301_withdues" as keyof ReturnType<typeof buildActivityPayload>
+      ],
+    ).toBe(293170000);
+    expect(activityBusinessRules(a, "2").withDues).toBe(false);
+  });
+  it("applies the Home Medication Dispensing team rule", () => {
+    const egyptActivity = {
+      ...activity("Home Medications Preparation"),
+      "_and_teamlookup_value@OData.Community.Display.V1.FormattedValue":
+        "SMH-Nursing Discharge First Step",
+    } as Activity;
+    const ahjActivity = {
+      ...egyptActivity,
+      "_and_teamlookup_value@OData.Community.Display.V1.FormattedValue":
+        "AHJ-Nursing Discharge First Step",
+    } as Activity;
+    expect(
+      activityBusinessRules(egyptActivity, "408520000")
+        .homeMedicationDispensing,
+    ).toBe(true);
+    expect(
+      activityBusinessRules(ahjActivity, "408520000")
+        .homeMedicationDispensing,
+    ).toBe(false);
+    const i = {
+      ...input(),
+      delayReason: { id: other, name: "Reason" },
+      homeMedicationDispensingRequired: "293170001",
+    };
+    expect(
+      buildActivityPayload(egyptActivity, i)[
+        "cr301_homemedicationdispensingrequired" as keyof ReturnType<
+          typeof buildActivityPayload
+        >
+      ],
+    ).toBe(293170001);
+  });
   it("preserves zero for physical No", () => {
     const i = input();
     i.physical = Object.fromEntries(
@@ -126,6 +178,83 @@ describe("activity business validation", () => {
     expect(p.and_didyoureceiveyourhomemedications).toBe(2);
     expect(p["crad2_ForwardToTeam@odata.bind"]).toBe(`/teams(${other})`);
     expect(p.crad2_actiondate).toBeUndefined();
+  });
+});
+describe("Home Medication workflow sequencing", () => {
+  it("waits instead of falling through to Financial Discharge", () => {
+    const request = {
+      ...activity("Request Initiation"),
+      crad2_status: 408520000,
+      cr301_homemedicationdispensingrequired:
+        HOME_MEDICATION_DISPENSING_YES,
+    } as Activity;
+    const financial = {
+      ...activity("Financial Discharge"),
+      crad2_dischargeactivityid: other,
+    } as Activity;
+
+    const state = activitySequence([request, financial]);
+    expect(state.waitingForHomeMedications).toBe(true);
+    expect(state.current).toBeUndefined();
+  });
+
+  it("prioritizes Home Medications until cleared, then permits Financial Discharge", () => {
+    const request = {
+      ...activity("Request Initiation"),
+      crad2_status: 408520000,
+      cr301_homemedicationdispensingrequired:
+        HOME_MEDICATION_DISPENSING_YES,
+    } as Activity;
+    const financial = {
+      ...activity("Financial Discharge"),
+      crad2_dischargeactivityid: other,
+    } as Activity;
+    const home = {
+      ...activity("Home Medications Preparation"),
+      crad2_dischargeactivityid: "33333333-3333-3333-3333-333333333333",
+    } as Activity;
+
+    expect(activitySequence([request, financial, home]).current).toBe(home);
+    expect(
+      activitySequence([
+        request,
+        financial,
+        { ...home, crad2_status: 408520000 },
+      ]).current,
+    ).toBe(financial);
+  });
+
+  it("keeps the No route on the existing Financial Discharge sequence", () => {
+    const request = {
+      ...activity("Request Initiation"),
+      crad2_status: 408520000,
+      cr301_homemedicationdispensingrequired: 293170001,
+    } as Activity;
+    const financial = {
+      ...activity("Financial Discharge"),
+      crad2_dischargeactivityid: other,
+    } as Activity;
+
+    expect(activitySequence([request, financial])).toMatchObject({
+      current: financial,
+      waitingForHomeMedications: false,
+    });
+  });
+  it("keeps KSA on its existing sequence even if legacy data contains the choice", () => {
+    const request = {
+      ...activity("Request Initiation"),
+      crad2_status: 408520000,
+      cr301_homemedicationdispensingrequired:
+        HOME_MEDICATION_DISPENSING_YES,
+    } as Activity;
+    const financial = {
+      ...activity("Financial Discharge"),
+      crad2_dischargeactivityid: other,
+    } as Activity;
+
+    expect(activitySequence([request, financial], false, false).current).toBe(
+      financial,
+    );
   });
 });
 describe("generated schema and labels", () => {
@@ -240,6 +369,48 @@ describe("backend workflow observation", () => {
       );
       await vi.advanceTimersByTimeAsync(20);
       expect((await timeout).changed).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("keeps polling past an early workflow change until the expected activity exists", async () => {
+    vi.useFakeTimers();
+    try {
+      const baseline = snapshot();
+      const financialOnly = snapshot();
+      financialOnly.parent.crda1_currentstepf = "Financial Discharge";
+      financialOnly.activities.push({
+        ...activity("Financial Discharge"),
+        crad2_dischargeactivityid: other,
+      });
+      const withHomeMedications = snapshot();
+      withHomeMedications.activities.push({
+        ...activity("Home Medications Preparation"),
+        crad2_dischargeactivityid: other,
+      });
+      const read = vi
+        .fn()
+        .mockResolvedValueOnce(financialOnly)
+        .mockResolvedValueOnce(withHomeMedications);
+      const promise = pollDischargeWorkflow(
+        other,
+        baseline,
+        id,
+        () => {},
+        new AbortController().signal,
+        {
+          read,
+          intervalMs: 10,
+          timeoutMs: 50,
+          acceptChange: (value) =>
+            value.activities.some((item) =>
+              item.crad2_subject?.toLowerCase().includes("home medications"),
+            ),
+        },
+      );
+      await vi.advanceTimersByTimeAsync(20);
+      expect((await promise).snapshot).toBe(withHomeMedications);
+      expect(read).toHaveBeenCalledTimes(2);
     } finally {
       vi.useRealTimers();
     }

@@ -14,6 +14,7 @@ import { tables } from "../config/schema";
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingState } from "../components/LoadingState";
 import { ErrorState } from "../components/ErrorState";
+import { useScope } from "../scope/ScopeContext";
 
 const PAGE_SIZE = 15;
 
@@ -37,7 +38,11 @@ export function EarlyDischargePage({
   revision: number;
   open: (draft: Draft) => void;
 }) {
-  const resource = useResource(() => earlyDischargeService.list(), [revision]);
+  const { value: scope } = useScope();
+  const resource = useResource(
+    () => (scope ? earlyDischargeService.list(scope) : Promise.resolve([])),
+    [revision, scope],
+  );
   const [page, setPage] = useState(1);
 
   const drafts = resource.data || [];
@@ -49,7 +54,7 @@ export function EarlyDischargePage({
   const pagedDrafts = drafts.slice(startIndex, endIndex);
 
   return (
-    <section className="tab-panel">
+    <section className="tab-panel early-responsive-page">
       <div id="earlyDraftHeader" className="section-surface">
         <div className="activity-head">
           <div className="activity-title">Active Early Discharges</div>
@@ -84,6 +89,7 @@ export function EarlyDischargePage({
             </div>
           ) : (
             <>
+              <div className="worklist-desktop-view">
               <table className="worklist-table">
                 <thead>
                   <tr>
@@ -130,6 +136,26 @@ export function EarlyDischargePage({
                   ))}
                 </tbody>
               </table>
+              </div>
+              <div className="worklist-mobile-cards early-mobile-cards">
+                {pagedDrafts.map((d) => (
+                  <article className="mobile-patient-card" key={d.and_earlydischargeid}>
+                    <div className="mobile-card-header">
+                      <div className="mobile-patient-info">
+                        <span className="summary-label">Discharge Date</span>
+                        <strong>{firstDisplayDateTime(d, ["and_dischargedate", "and_date", "createdon"])}</strong>
+                      </div>
+                      <StatusBadge label={displayChoice(d, tables.early, "and_statusnew")} />
+                    </div>
+                    <dl className="early-card-details">
+                      <div><dt>Count Of Patients</dt><dd>{displayValue(d, "crda1_countofpatients", null, "0")}</dd></div>
+                      <div><dt>Submission Date</dt><dd>{displayDateTime(d, "and_submissiondate")}</dd></div>
+                      <div><dt>Submitted By</dt><dd>{displayValue(d, "_and_submittedby_value")}</dd></div>
+                    </dl>
+                    <button type="button" className="btn-mobile-open" onClick={() => open(d)}>Open Draft →</button>
+                  </article>
+                ))}
+              </div>
 
               <div className="pagination-bar" style={{ borderRadius: 0, borderLeft: 0, borderRight: 0, borderBottom: 0, marginTop: 0 }}>
                 <div className="pagination-info">

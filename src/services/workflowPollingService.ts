@@ -52,6 +52,7 @@ export async function pollDischargeWorkflow(
     intervalMs?: number;
     timeoutMs?: number;
     read?: typeof captureDischargeWorkflowState;
+    acceptChange?: (snapshot: WorkflowSnapshot) => boolean;
   } = {},
 ) {
   const read = options.read || captureDischargeWorkflowState;
@@ -77,7 +78,10 @@ export async function pollDischargeWorkflow(
       latest = await read(id);
       signal.throwIfAborted();
       onSnapshot(latest);
-      if (workflowSignal(latest, targetId) !== initial)
+      if (
+        workflowSignal(latest, targetId) !== initial &&
+        (!options.acceptChange || options.acceptChange(latest))
+      )
         return { changed: true, snapshot: latest, failures };
     } catch (error) {
       if (signal.aborted) throw error;
