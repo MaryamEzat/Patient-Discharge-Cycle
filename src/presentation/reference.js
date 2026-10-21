@@ -21,6 +21,7 @@ export function getPatientDisplayData(r) {
     room: displayValue(r, CONFIG.fields.room, null, ""),
     bed: displayValue(r, CONFIG.fields.bed, null, ""),
     floor: displayValue(r, CONFIG.fields.floor, null, ""),
+    location: displayValue(r, CONFIG.fields.location, null, ""),
     nurseStation: displayValue(r, CONFIG.fields.nurseStation, null, ""),
     physician: displayValue(r, CONFIG.fields.physician, null, ""),
     admissionDoctor: firstDisplayValue(

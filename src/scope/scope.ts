@@ -4,9 +4,9 @@ export type Scope = (typeof SCOPES)[number];
 export const SCOPE_STORAGE_KEY = "patient-discharge.scope";
 
 export const EGYPT_BUSINESS_UNITS = [
-  { entityId: "1", label: "ASH" },
-  { entityId: "2", label: "SMH" },
-  { entityId: "4", label: "AMH" },
+  { entityId: "1", label: "ASH", hospitalNameArabic: "الشلالات" },
+  { entityId: "2", label: "SMH", hospitalNameArabic: "سموحة" },
+  { entityId: "4", label: "AMH", hospitalNameArabic: "المعادي" },
 ] as const;
 export type EgyptBusinessUnitEntityId =
   (typeof EGYPT_BUSINESS_UNITS)[number]["entityId"];
@@ -16,6 +16,14 @@ export function egyptBusinessUnitFromEntityId(entityId: unknown): string {
     EGYPT_BUSINESS_UNITS.find(
       (businessUnit) => businessUnit.entityId === String(entityId ?? "").trim(),
     )?.label || ""
+  );
+}
+
+export function egyptHospitalNameFromEntityId(entityId: unknown): string {
+  return (
+    EGYPT_BUSINESS_UNITS.find(
+      (businessUnit) => businessUnit.entityId === String(entityId ?? "").trim(),
+    )?.hospitalNameArabic || ""
   );
 }
 

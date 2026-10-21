@@ -47,6 +47,7 @@ export const CONFIG = {
     room: "crad2_room",
     bed: "crad2_bed",
     floor: "crad2_floor",
+    location: "new_location",
     nurseStation: "new_nursestation",
     physician: "crad2_doctorname",
     admissionDoctor: "new_admissiondoctor",

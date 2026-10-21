@@ -25,6 +25,13 @@ import { ErrorState, errorMessage } from "../components/ErrorState";
 import { RecordLink } from "../components/RecordLink";
 import { Modal } from "../components/Modal";
 import { egyptBusinessUnitFromEntityId } from "../scope/scope";
+import {
+  exitPermitService,
+  hasClearedPhysicalDischarge,
+  isExitPermitPhysicalClearEvent,
+  openExitPermitPreview,
+  openPreparingExitPermitWindow,
+} from "../services/exitPermitService";
 export function PatientWorkspacePage({
   id,
   back,
@@ -44,10 +51,16 @@ export function PatientWorkspacePage({
   const [message, setMessage] = useState("");
   const [formVersion, setFormVersion] = useState(0);
   const [expectHomeMedications, setExpectHomeMedications] = useState(false);
+  const [permitBusy, setPermitBusy] = useState(false);
+  const [permitError, setPermitError] = useState("");
+  const [completionPermitReady, setCompletionPermitReady] = useState(false);
   const cancellation = useRef<AbortController | undefined>(undefined);
   useEffect(() => () => cancellation.current?.abort(), [id]);
   const isEgyptPatient = Boolean(
     egyptBusinessUnitFromEntityId(resource.data?.parent.new_entityid),
+  );
+  const physicalDischargeCleared = hasClearedPhysicalDischarge(
+    resource.data?.activities || [],
   );
   const sequence = resource.data
     ? activitySequence(
@@ -78,6 +91,11 @@ export function PatientWorkspacePage({
       Number(input.homeMedicationDispensingRequired) ===
         HOME_MEDICATION_DISPENSING_YES &&
       isEgyptPatient;
+    const showPermitAfterPhysicalClear = isExitPermitPhysicalClearEvent(
+      active,
+      input.action,
+      isEgyptPatient,
+    );
     try {
       buildActivityPayload(active, input);
       if (waitForHomeMedications) setExpectHomeMedications(true);
@@ -92,6 +110,10 @@ export function PatientWorkspacePage({
       const baseline = await captureDischargeWorkflowState(id);
       controller.signal.throwIfAborted();
       resource.setData(baseline);
+      if (showPermitAfterPhysicalClear) {
+        setMessage("");
+        setCompletionPermitReady(true);
+      }
       const workflowChanged =
         workflowSignal(before, active.crad2_dischargeactivityid) !==
         workflowSignal(baseline, active.crad2_dischargeactivityid);
@@ -114,13 +136,14 @@ export function PatientWorkspacePage({
               }
             : undefined,
         );
-        setMessage(
-          result.changed
-            ? ""
-            : result.failures
-              ? "Activity saved. Some workflow refreshes failed. Refresh to check the current state."
-              : "Activity saved. Workflow update is still processing.",
-        );
+        if (!showPermitAfterPhysicalClear)
+          setMessage(
+            result.changed
+              ? ""
+              : result.failures
+                ? "Activity saved. Some workflow refreshes failed. Refresh to check the current state."
+                : "Activity saved. Workflow update is still processing.",
+          );
       }
       setFormVersion((v) => v + 1);
       onChanged();
@@ -139,6 +162,47 @@ export function PatientWorkspacePage({
       if (!controller.signal.aborted) setBusy(false);
     }
   }
+  async function generateExitPermit() {
+    if (!resource.data || permitBusy) return;
+    if (!hasClearedPhysicalDischarge(resource.data.activities)) {
+      setPermitError(
+        "The Exit Permit becomes available after Physical Discharge is cleared.",
+      );
+      return;
+    }
+    const preview = openPreparingExitPermitWindow();
+    if (!preview) {
+      setPermitError("Allow pop-ups for this app, then try again.");
+      return;
+    }
+    setPermitBusy(true);
+    setPermitError("");
+    try {
+      const permit = await exitPermitService.load(
+        resource.data.parent,
+        resource.data.activities,
+      );
+      if (!permit) {
+        preview.close();
+        setPermitError("Exit Permits are available only for Egypt cases with Entity ID 1, 2, or 4.");
+        return;
+      }
+      if (!permit.canGenerate) {
+        preview.close();
+        setPermitError(
+          "The completed Financial and Physical Discharge timestamps could not be verified. Refresh the record and try again.",
+        );
+        return;
+      }
+      openExitPermitPreview(permit, preview);
+    } catch (error) {
+      preview.close();
+      console.error("Exit Permit generation failed", error);
+      setPermitError(errorMessage(error));
+    } finally {
+      setPermitBusy(false);
+    }
+  }
   if (resource.loading && !resource.data)
     return <LoadingState message="Loading patient workspace..." />;
   if (resource.error)
@@ -153,10 +217,23 @@ export function PatientWorkspacePage({
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             <span>Back to Worklist</span>
           </button>
-          <RecordLink className="btn-outline-modern" table={tables.patient} id={id}>
-            <span>Open Full Record</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-          </RecordLink>
+          <div className="patient-header-actions">
+            {isEgyptPatient && (
+              <button
+                type="button"
+                className="btn-outline-modern exit-permit-action"
+                disabled={busy || permitBusy || !physicalDischargeCleared}
+                onClick={generateExitPermit}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>{permitBusy ? "Preparing Permit…" : "Generate Exit Permit"}</span>
+              </button>
+            )}
+            <RecordLink className="btn-outline-modern" table={tables.patient} id={id}>
+              <span>Open Full Record</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </RecordLink>
+          </div>
         </div>
         <div className="patient-title-block">
           <h1 className="patient-name">{snapshot.parent.crad2_patientname || "Patient Workspace"}</h1>
@@ -248,6 +325,47 @@ export function PatientWorkspacePage({
               </div>
             </div>
           )}
+        </Modal>
+      )}
+      {permitError && (
+        <Modal title="Exit Permit Unavailable" close={() => setPermitError("")}>
+          <div className="modal-result">
+            <p className="small" style={{ marginBottom: "16px" }}>{permitError}</p>
+            <div className="form-actions">
+              <button className="btn-primary" onClick={() => setPermitError("")}>
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {completionPermitReady && (
+        <Modal
+          title="Physical Discharge Cleared"
+          close={() => setCompletionPermitReady(false)}
+        >
+          <div className="modal-result">
+            <p className="small" style={{ marginBottom: "16px" }}>
+              Physical Discharge has been cleared successfully. The Exit Permit is ready to download.
+            </p>
+            <div className="form-actions">
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setCompletionPermitReady(false);
+                  void generateExitPermit();
+                }}
+              >
+                Download Exit Permit
+              </button>
+              <button
+                className="btn-outline-modern"
+                onClick={() => setCompletionPermitReady(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </section>

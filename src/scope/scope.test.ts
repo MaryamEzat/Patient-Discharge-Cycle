@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   egyptBusinessUnitFromEntityId,
+  egyptHospitalNameFromEntityId,
   isScope,
   recordMatchesScope,
   recordsForScope,
@@ -43,5 +44,12 @@ describe("country scope", () => {
     expect(egyptBusinessUnitFromEntityId(2)).toBe("SMH");
     expect(egyptBusinessUnitFromEntityId(" 4 ")).toBe("AMH");
     expect(egyptBusinessUnitFromEntityId("9")).toBe("");
+  });
+
+  it("maps Egypt Entity IDs to their printed hospital names", () => {
+    expect(egyptHospitalNameFromEntityId("1")).toBe("الشلالات");
+    expect(egyptHospitalNameFromEntityId(2)).toBe("سموحة");
+    expect(egyptHospitalNameFromEntityId(" 4 ")).toBe("المعادي");
+    expect(egyptHospitalNameFromEntityId("102")).toBe("");
   });
 });
