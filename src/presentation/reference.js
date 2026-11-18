@@ -172,11 +172,35 @@ export function getInpatientDisplayData(row) {
   };
 }
 
+export function getIpdVisitDisplayData(visit) {
+  const f = CONFIG.ipdVisitFields;
+  return {
+    id: visit[f.id],
+    visitId: displayValue(visit, f.name, null, ""),
+    patientCode: displayValue(visit, f.patientCode, null, ""),
+    patientName: visit.__patient
+      ? displayValue(visit.__patient, CONFIG.ipdPatientFields.name, null, "")
+      : "",
+    admissionStatus: displayChoice(
+      visit,
+      CONFIG.tables.ipdVisit,
+      f.admissionStatus,
+      "",
+    ),
+    bed: displayValue(visit, f.bed, null, ""),
+    floor: displayValue(visit, f.floor, null, ""),
+    physician: displayValue(visit, f.physician, null, ""),
+    specialty: displayValue(visit, f.specialty, null, ""),
+  };
+}
+
 export function getEarlyPatientDisplayData(row) {
   const f = CONFIG.earlyIpdFields;
   const inpatient = row.__inpatient
     ? getInpatientDisplayData(row.__inpatient)
-    : {};
+    : row.__visit
+      ? getIpdVisitDisplayData(row.__visit)
+      : {};
   const childName = displayValue(row, f.name, null, "");
   const dateLikeName = /^\d{4}-\d{2}-\d{2}$/.test(childName);
   return {
@@ -200,6 +224,8 @@ export function getEarlyPatientDisplayData(row) {
     admissionDoctor: inpatient.admissionDoctor || "",
     specialty: inpatient.specialty || "",
     admissionDate: inpatient.admissionDate || "",
+    floor: inpatient.floor || "",
+    admissionStatus: inpatient.admissionStatus || "",
     cancellationReason: displayValue(row, f.cancellationReason, null, ""),
     isSubmitted: displayValue(row, f.isSubmitted, null, ""),
   };

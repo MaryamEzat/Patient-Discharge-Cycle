@@ -232,6 +232,38 @@
           "x-ms-dataverse-type": "IntegerType",
           "x-ms-schema-name": "cr301_LongestStepDuration"
         },
+        "cr301_patientcodeamh": {
+          "type": "string",
+          "title": "Patient Code AMH",
+          "x-ms-dataverse-attribute": "cr301_patientcodeamh",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "cr301_PatientCodeAMH"
+        },
+        "cr301_patientcodeamhname": {
+          "type": "string",
+          "title": "cr301_patientcodeamhname",
+          "x-ms-dataverse-attribute": "cr301_patientcodeamhname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "cr301_PatientCodeAMHName",
+          "x-ms-read-only": true,
+          "maxLength": 850
+        },
+        "cr301_patientcodeanc": {
+          "type": "string",
+          "title": "Patient Code ANC",
+          "x-ms-dataverse-attribute": "cr301_patientcodeanc",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "cr301_PatientCodeANC"
+        },
+        "cr301_patientcodeancname": {
+          "type": "string",
+          "title": "cr301_patientcodeancname",
+          "x-ms-dataverse-attribute": "cr301_patientcodeancname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "cr301_PatientCodeANCName",
+          "x-ms-read-only": true,
+          "maxLength": 100
+        },
         "cr301_patientnationality": {
           "type": "string",
           "title": "Patient Nationality",

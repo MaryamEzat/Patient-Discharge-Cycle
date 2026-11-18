@@ -59,11 +59,15 @@ export function ActivityPanel({
   onSave,
   busy,
   refresh,
+  physicalDelayReasonRequired = false,
+  isEgyptPatient,
 }: {
   activity: Activity;
   onSave: (input: ActivityInput) => Promise<void>;
   busy: boolean;
   refresh: () => void;
+  physicalDelayReasonRequired?: boolean;
+  isEgyptPatient?: boolean;
 }) {
   const rules = activityRules(activity);
   const [input, setInput] = useState<ActivityInput>({
@@ -79,10 +83,20 @@ export function ActivityPanel({
         ? String(activity.cr301_homemedicationdispensingrequired)
         : "",
     followUp: "",
+    delayReason: activity._and_delayreason_value
+      ? {
+          id: activity._and_delayreason_value,
+          name: displayValue(activity, "_and_delayreason_value", null, ""),
+        }
+      : undefined,
     comment: activity.new_comment || "",
     physical: {},
   });
-  const businessRules = activityBusinessRules(activity, input.action);
+  const businessRules = activityBusinessRules(
+    activity,
+    input.action,
+    isEgyptPatient,
+  );
   const [fileBusy, setFileBusy] = useState(false);
   const [message, setMessage] = useState("");
   const set = <K extends keyof ActivityInput>(
@@ -181,6 +195,12 @@ export function ActivityPanel({
               options={choiceOptions(tables.activity, "crad2_status")}
             />
           </Field>
+          {rules.physical && physicalDelayReasonRequired && (
+            <div role="status" className="section-surface notice">
+              Physical discharge is delayed. A delay reason is required before
+              completing this activity.
+            </div>
+          )}
           {businessRules.withDues && (
             <Field label="With dues *">
               <Select
@@ -204,7 +224,7 @@ export function ActivityPanel({
               />
             </Field>
           )}
-          {rules.delay && (
+          {(rules.delay || (rules.physical && physicalDelayReasonRequired)) && (
             <Field label="Delay Reason *">
               <LookupInput
                 label="Look for Delay Reason"

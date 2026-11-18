@@ -104,11 +104,9 @@ export function useProgressiveDischarges(
               if (signal.aborted) return;
               if (dayRows.length > 0) {
                 cumulativeRows = mergeAndSortPatients(cumulativeRows, dayRows);
-                setRows((previous) =>
-                  preserveRows
-                    ? mergeAndSortPatients(previous, dayRows)
-                    : cumulativeRows,
-                );
+                // Merge rather than replace, so rows found by a server search while history is
+                // still streaming are not wiped by the next chunk.
+                setRows((previous) => mergeAndSortPatients(previous, dayRows));
               }
             } catch (dayError) {
               // Ignore single day cancellation or transient error during progressive history stream
@@ -131,11 +129,7 @@ export function useProgressiveDischarges(
                   cumulativeRows,
                   olderRows,
                 );
-                setRows((previous) =>
-                  preserveRows
-                    ? mergeAndSortPatients(previous, olderRows)
-                    : cumulativeRows,
-                );
+                setRows((previous) => mergeAndSortPatients(previous, olderRows));
               }
             } catch (olderError) {
               if (signal.aborted) return;

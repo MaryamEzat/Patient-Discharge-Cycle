@@ -1,16 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useResource } from "../hooks/useResource";
 import { platformService } from "../services/platformService";
 import { useScope } from "../scope/ScopeContext";
 import { SCOPES } from "../scope/scope";
+function ChipIcon({ d }: { d: string }) {
+  return (
+    <svg className="context-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
 export function TopBar({
   refresh,
   updated,
   pending,
+  sections,
 }: {
   refresh: () => void;
   updated?: Date;
   pending?: number;
+  sections?: ReactNode;
 }) {
   const { value: scope, setValue: setScope } = useScope();
   const [scopeOpen, setScopeOpen] = useState(false);
@@ -20,6 +30,8 @@ export function TopBar({
     context.data?.user.fullName ||
     context.data?.user.userPrincipalName ||
     "Current user";
+  const account = context.data?.user.userPrincipalName;
+  const accountLine = account && account !== name ? account : "";
   useEffect(() => {
     if (!scopeOpen) return;
     const closeOutside = (event: PointerEvent) => {
@@ -38,9 +50,12 @@ export function TopBar({
   return (
     <header className="top-context">
       <div className="top-context-left">
-        <div className="subtitle">PATIENT DISCHARGE CYCLE</div>
-        <div className="brand">Patient Discharge Cycle</div>
+        <div className="top-context-titles">
+          <div className="subtitle">PATIENT DISCHARGE CYCLE</div>
+          <div className="brand">Patient Discharge Cycle</div>
+        </div>
       </div>
+      {sections}
       <div className="top-context-right">
         <div className="top-context-user-group">
           <button
@@ -64,7 +79,7 @@ export function TopBar({
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
             </svg>
           </button>
-          <div className="user-inline">
+          <div className="user-inline" title={name}>
             <div className="avatar">
               {name
                 .split(" ")
@@ -73,11 +88,15 @@ export function TopBar({
                 .join("")
                 .toUpperCase()}
             </div>
-            <div className="small">{name}</div>
+            <div className="user-text">
+              <div className="small">{name}</div>
+              {accountLine && <div className="user-sub">{accountLine}</div>}
+            </div>
           </div>
         </div>
         <div className="context-title">
-          <div className="context-chip context-chip-left scope-switcher" ref={scopeMenu}>
+          <div className="context-chip context-chip-left scope-switcher" ref={scopeMenu} title="Country">
+            <ChipIcon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
             <span className="context-label">COUNTRY</span>
             <button
               type="button"
@@ -112,7 +131,8 @@ export function TopBar({
               </div>
             )}
           </div>
-          <div className="context-chip context-chip-center">
+          <div className="context-chip context-chip-center" title="Last updated">
+            <ChipIcon d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             <span className="context-label">UPDATED</span>
             <span className="context-value last-updated">
               {updated && !isNaN(updated.getTime())
@@ -120,10 +140,11 @@ export function TopBar({
                 : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
           </div>
-          <div className="context-chip context-chip-right">
+          <div className="context-chip context-chip-right" title="Needs attention">
+            <ChipIcon d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
             <span className="context-label">ATTENTION</span>
             <span className="context-value">
-              {pending === undefined ? "747 pending" : `${pending} pending`}
+              {pending === undefined ? "—" : `${pending} pending`}
             </span>
           </div>
         </div>

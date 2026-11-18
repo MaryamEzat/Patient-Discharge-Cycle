@@ -34,11 +34,11 @@ export function useDelayedDischarges(
       setLoading(!preserveRows);
       setRefreshing(preserveRows);
       setError(null);
-      setStatusMessage("Loading delayed discharge cases...");
+      setStatusMessage("Loading clinical discharge delays...");
       dischargeService
         .listDelayedEgypt(controller.signal, (loaded) =>
           setStatusMessage(
-            `Loading delayed discharge cases... ${loaded.toLocaleString()} records retrieved.`,
+            `Loading clinical discharge delays... ${loaded.toLocaleString()} records retrieved.`,
           ),
         )
         .then((result) => {
@@ -50,7 +50,7 @@ export function useDelayedDischarges(
         })
         .catch((reason) => {
           if (!controller.signal.aborted) {
-            console.error("Failed loading delayed discharge cases", reason);
+            console.error("Failed loading clinical discharge delays", reason);
             if (!preserveRows) setError(reason);
           }
         })
@@ -66,7 +66,8 @@ export function useDelayedDischarges(
   );
 
   useEffect(() => {
-    load(false);
+    // Re-query each time the view is shown so delay state reflects the current time.
+    load(loadedCacheKeyRef.current === cacheKey);
     return () => controllerRef.current?.abort();
   }, [load]);
 

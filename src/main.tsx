@@ -3,6 +3,7 @@ import { Component, type ReactNode } from "react";
 import App from "./App";
 import { ScopeProvider } from "./scope/ScopeContext";
 import "./styles/app.css";
+import "./styles/talent-theme.css";
 class AppBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }

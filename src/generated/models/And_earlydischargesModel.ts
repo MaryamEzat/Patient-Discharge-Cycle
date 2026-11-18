@@ -25,6 +25,7 @@ export interface And_earlydischargesBase {
   and_statusnew?: And_earlydischargesand_statusnew;
   and_submissiondate?: string;
   "and_SubmittedBy@odata.bind"?: string;
+  "cr301_BusinessUnit@odata.bind"?: string;
   importsequencenumber?: number;
   overriddencreatedon?: string;
   statecode: And_earlydischargesstatecode;
@@ -38,6 +39,7 @@ export interface And_earlydischarges extends And_earlydischargesBase {
   and_statusnewname?: string;
   and_submittedbyname?: string;
   and_submittedbyyominame?: string;
+  cr301_businessunitname?: string;
   crda1_countofpatients?: number;
   crda1_countofpatients_date?: string;
   crda1_countofpatients_state?: number;
@@ -61,6 +63,8 @@ export interface And_earlydischarges extends And_earlydischargesBase {
   versionnumber?: number;
   and_submittedby?: object;
   _and_submittedby_value?: string;
+  cr301_businessunit?: object;
+  _cr301_businessunit_value?: string;
   createdby?: object;
   _createdby_value?: string;
   createdonbehalfby?: object;

@@ -38,7 +38,7 @@ export default function App() {
 
   const progressive = useProgressiveDischarges(filters, scope);
   const delayed = useDelayedDischarges(
-    worklistView === "delayed" && scope === "Egypt",
+    page === "worklist" && worklistView === "delayed" && scope === "Egypt",
     scope,
   );
 
@@ -64,9 +64,18 @@ export default function App() {
     }
   }, [page, worklistDirty, worklistView, delayed, progressive]);
 
+  // Also stamp a finished load with no rows, otherwise Refresh never moves the Updated time.
   useEffect(() => {
-    if (progressive.rows.length > 0) setUpdated(new Date());
-  }, [progressive.rows]);
+    if (
+      progressive.rows.length > 0 ||
+      (!progressive.initialTodayLoading && !progressive.backgroundHistoryLoading)
+    )
+      setUpdated(new Date());
+  }, [
+    progressive.rows,
+    progressive.initialTodayLoading,
+    progressive.backgroundHistoryLoading,
+  ]);
 
   const refresh = () => {
     setRevision((v) => v + 1);

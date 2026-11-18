@@ -108,6 +108,22 @@
           "x-ms-read-only": true,
           "maxLength": 200
         },
+        "cr301_businessunit": {
+          "type": "string",
+          "title": "Business Unit",
+          "x-ms-dataverse-attribute": "cr301_businessunit",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "cr301_BusinessUnit"
+        },
+        "cr301_businessunitname": {
+          "type": "string",
+          "title": "cr301_businessunitname",
+          "x-ms-dataverse-attribute": "cr301_businessunitname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "cr301_BusinessUnitName",
+          "x-ms-read-only": true,
+          "maxLength": 160
+        },
         "crda1_countofpatients": {
           "type": "string",
           "title": "Count Of Patients",

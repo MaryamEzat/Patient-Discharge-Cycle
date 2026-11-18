@@ -90,6 +90,29 @@ describe("activity business validation", () => {
     ).toBe(293170000);
     expect(activityBusinessRules(a, "2").withDues).toBe(false);
   });
+  it("never applies Egypt-only activity fields to an AHJ patient", () => {
+    const financial = {
+      ...activity("Financial Discharge"),
+      "_ownerid_value@OData.Community.Display.V1.FormattedValue": "Egypt Finance",
+    } as Activity;
+    // Seen in AEMARA: an AHJ patient's initiation assigned to an Egypt nursing team.
+    const initiation = {
+      ...activity("Request Initiation"),
+      "_and_teamlookup_value@OData.Community.Display.V1.FormattedValue":
+        "AMH-Nursing Discharge First Step",
+    } as Activity;
+    expect(activityBusinessRules(financial, "408520000", false).withDues).toBe(false);
+    expect(
+      activityBusinessRules(initiation, "408520000", false).homeMedicationDispensing,
+    ).toBe(false);
+    expect(activityBusinessRules(financial, "408520000", true).withDues).toBe(true);
+    expect(
+      activityBusinessRules(initiation, "408520000", true).homeMedicationDispensing,
+    ).toBe(true);
+    expect(() =>
+      buildActivityPayload(financial, input(), { isEgyptPatient: false }),
+    ).not.toThrow();
+  });
   it("applies the Home Medication Dispensing team rule", () => {
     const egyptActivity = {
       ...activity("Home Medications Preparation"),
@@ -134,6 +157,29 @@ describe("activity business validation", () => {
     const p = buildActivityPayload(activity("Physical Discharge"), i);
     expect(p.and_didyoureceiveyourhomemedications).toBe(0);
     expect(p.crad2_actiondate).toBeTruthy();
+  });
+  it("requires and binds the existing delay lookup for delayed Egypt Physical Discharge", () => {
+    const i = input();
+    i.physical = Object.fromEntries(
+      [
+        "and_didyoureceivethedischargesummary",
+        "and_didyoureceiveyourhomemedications",
+        "and_doyouhaveafollowupappointment",
+      ].map((field) => [field, "1"]),
+    );
+    expect(() =>
+      buildActivityPayload(activity("Physical Discharge"), i, {
+        physicalDelayReasonRequired: true,
+      }),
+    ).toThrow("Physical Discharge Delay Reason");
+    const payload = buildActivityPayload(
+      activity("Physical Discharge"),
+      { ...i, delayReason: { id: other, name: "Clinical delay" } },
+      { physicalDelayReasonRequired: true },
+    );
+    expect(payload["and_DelayReason@odata.bind"]).toBe(
+      `/and_delayreasonses(${other})`,
+    );
   });
   it("rejects missing confirmations and required delay/team choices", () => {
     expect(() =>

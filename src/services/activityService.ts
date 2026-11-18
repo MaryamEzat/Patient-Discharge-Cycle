@@ -46,6 +46,10 @@ export interface ActivityInput {
   comment: string;
   physical: Record<string, string>;
 }
+export interface ActivityValidationContext {
+  physicalDelayReasonRequired?: boolean;
+  isEgyptPatient?: boolean;
+}
 function isSubject(activity: Activity, subject: string) {
   return normalizeSubject(activity.crad2_subject).includes(subject);
 }
@@ -108,7 +112,17 @@ export function activityRules(activity: Activity) {
       name.includes("home medications preparation"),
   };
 }
-export function activityBusinessRules(activity: Activity, action: string) {
+/**
+ * Egypt-only activity fields. `isEgyptPatient` (from the patient's new_entityid) overrides the
+ * owner/team naming when known, so an AHJ patient never receives Egypt rules.
+ */
+export function activityBusinessRules(
+  activity: Activity,
+  action: string,
+  isEgyptPatient?: boolean,
+) {
+  if (isEgyptPatient === false)
+    return { withDues: false, homeMedicationDispensing: false };
   const subject = normalizeSubject(activity.crad2_subject);
   const normalizeLookupName = (value: string) =>
     value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -186,9 +200,14 @@ const select = selectFields(tables.activity, desired);
 export function buildActivityPayload(
   activity: Activity,
   input: ActivityInput,
+  context: ActivityValidationContext = {},
 ): Partial<Crad2_dischargeactivitiesBase> {
   const rules = activityRules(activity);
-  const businessRules = activityBusinessRules(activity, input.action);
+  const businessRules = activityBusinessRules(
+    activity,
+    input.action,
+    context.isEgyptPatient,
+  );
   if (
     input.action === "" ||
     !Object.hasOwn(choiceOptions(tables.activity, "crad2_status"), input.action)
@@ -197,6 +216,15 @@ export function buildActivityPayload(
   if (rules.delay && !input.delayReason)
     throw new OperationalError(
       "Select a Delay Reason before saving this activity.",
+    );
+  if (
+    context.physicalDelayReasonRequired &&
+    rules.physical &&
+    input.action === String(CLEARED_ACTIVITY) &&
+    !input.delayReason
+  )
+    throw new OperationalError(
+      "Physical Discharge Delay Reason is required for delayed discharges.",
     );
   if (
     rules.initiation &&
@@ -309,7 +337,7 @@ export function buildActivityPayload(
       )
         payload[field] = 2;
     }
-  if (rules.delay && input.delayReason)
+  if ((rules.delay || context.physicalDelayReasonRequired) && input.delayReason)
     Object.assign(
       payload,
       binding(
@@ -343,12 +371,16 @@ export const activityService = {
       signal,
     );
   },
-  async save(activity: Activity, input: ActivityInput) {
+  async save(
+    activity: Activity,
+    input: ActivityInput,
+    context: ActivityValidationContext = {},
+  ) {
     unwrap(
       await updateRecordOrg(
         tables.activity,
         guid(activity.crad2_dischargeactivityid),
-        buildActivityPayload(activity, input),
+        buildActivityPayload(activity, input, context),
       ),
       "Saving activity",
     );

@@ -37,22 +37,31 @@ it("filters Egypt business units by the Patient Discharge Entity ID", () => {
   );
 });
 
-it("uses the stored Current Discharge TAT and Egypt Entity IDs", () => {
+it("uses active Egypt candidates and the date-aware clinical threshold", () => {
   expect(DELAYED_EGYPT_FILTER).toBe(
-    "cr301_currentdischargetat gt 120 and (new_entityid eq '1' or new_entityid eq '2' or new_entityid eq '4')",
+    "(new_entityid eq '1' or new_entityid eq '2' or new_entityid eq '4') and (crad2_status eq 408520000 or crad2_status eq 408520001)",
   );
   expect(
-    isDelayedEgyptPatient({
-      new_entityid: "4",
-      cr301_currentdischargetat: 121,
-      crad2_status: 408520002,
-    } as Patient),
+    isDelayedEgyptPatient(
+      {
+        new_entityid: "4",
+        and_dischargetype: "Early",
+        crad2_dischargedate: "2026-10-22T00:00:00+03:00",
+        crad2_status: 408520001,
+      } as Patient,
+      new Date("2026-10-22T10:00:00+03:00"),
+    ),
   ).toBe(true);
   expect(
-    isDelayedEgyptPatient({
-      new_entityid: "102",
-      cr301_currentdischargetat: 526909,
-    } as Patient),
+    isDelayedEgyptPatient(
+      {
+        new_entityid: "102",
+        and_dischargetype: "Early",
+        crad2_dischargedate: "2026-10-22T00:00:00+03:00",
+        crad2_status: 408520001,
+      } as Patient,
+      new Date("2026-10-22T20:00:00+03:00"),
+    ),
   ).toBe(false);
 });
 
@@ -151,4 +160,11 @@ it("filters delayed cases by unit, type, status, and physician date range", () =
     dateTo: "2026-10-05",
   });
   expect(result.map((row) => row.crad2_patientdischargeid)).toEqual(["match"]);
+});
+
+it("server search uses the discharge table's own visit column", async () => {
+  const { buildSearchFilter } = await import("./dischargeService");
+  const filter = buildSearchFilter("1487265");
+  expect(filter).toContain("contains(crad2_visitid, '1487265')");
+  expect(filter).not.toContain("and_visitid");
 });

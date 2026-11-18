@@ -9,6 +9,8 @@ import { guid, selectFields, tables } from "../config/schema";
 import { unwrap } from "./data";
 
 const CLEARED_ACTIVITY = 408520000;
+export const COMPLETED_PATIENT_STATUS = 408520002;
+const WITH_DUES_YES = 293170000;
 const linkedInpatientSelect = selectFields(tables.inpatient, [
   "and_patientname",
   "and_name",
@@ -86,6 +88,20 @@ export function isExitPermitPhysicalClearEvent(
   );
 }
 
+export function isExitPermitCompletionEvent(
+  previousPatientStatus: number | undefined,
+  currentPatientStatus: number | undefined,
+  activity: Activity,
+  action: string,
+  isEgyptPatient: boolean,
+) {
+  return (
+    previousPatientStatus !== COMPLETED_PATIENT_STATUS &&
+    currentPatientStatus === COMPLETED_PATIENT_STATUS &&
+    isExitPermitPhysicalClearEvent(activity, action, isEgyptPatient)
+  );
+}
+
 function first(...values: unknown[]) {
   for (const value of values) {
     const text = String(value ?? "").trim();
@@ -136,7 +152,9 @@ export function buildExitPermitData(
   );
   const hasFinancialClearance = Boolean(financialActivity || inpatientFinancialDate);
   const canGenerate = Boolean(
-    physicalActivity?.crad2_actiondate && hasFinancialClearance,
+    patient.crad2_status === COMPLETED_PATIENT_STATUS &&
+      physicalActivity?.crad2_actiondate &&
+      hasFinancialClearance,
   );
   const room = first(display.bed, inpatient?.and_bed);
   const location = joinDistinct([
@@ -165,7 +183,11 @@ export function buildExitPermitData(
       display.admissionDate,
       inpatient ? displayDateTime(inpatient, "and_admissiondate", "") : "",
     ),
-    financialStatus: hasFinancialClearance ? "Cleared" : "",
+    financialStatus: hasFinancialClearance
+      ? financialActivity?.cr301_withdues === WITH_DUES_YES
+        ? "Cleared with Dues"
+        : "Cleared"
+      : "",
     financialClearanceDateTime,
     completionDateTime:
       physicalActivity?.crad2_actiondate
@@ -176,6 +198,9 @@ export function buildExitPermitData(
 }
 
 async function loadLinkedInpatient(patient: Patient) {
+  // The verified and_patientcode lookup belongs to the AHJ architecture.
+  // Egypt permits must not use that GUID against the AHJ inpatient table.
+  if (egyptBusinessUnitFromEntityId(patient.new_entityid)) return undefined;
   const id = patient._and_patientcode_value;
   if (!id) return undefined;
   try {

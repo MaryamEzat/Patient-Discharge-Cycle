@@ -1876,6 +1876,20 @@ export const dataSourcesInfo = {
     "dataSourceType": "Dataverse",
     "apis": {}
   },
+  "ipd_patients": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "ipd_patientid",
+    "dataSourceType": "Dataverse",
+    "apis": {}
+  },
+  "ipd_visits": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "ipd_visitid",
+    "dataSourceType": "Dataverse",
+    "apis": {}
+  },
   "systemusers": {
     "tableId": "",
     "version": "",

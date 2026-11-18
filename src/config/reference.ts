@@ -33,6 +33,8 @@ export const CONFIG = {
     early: "and_earlydischarge",
     earlyIpd: "and_earlydischarge_ipdvisits",
     inpatient: "and_inpatientlist",
+    ipdVisit: "ipd_visit",
+    ipdPatient: "ipd_patient",
   },
   fields: {
     id: "crad2_patientdischargeid",
@@ -101,6 +103,7 @@ export const CONFIG = {
     submissionDate: "and_submissiondate",
     submittedBy: "_and_submittedby_value",
     createdOn: "createdon",
+    businessUnit: "cr301_businessunit",
   },
   patientAliases: {
     patientId: [
@@ -163,6 +166,26 @@ export const CONFIG = {
     dischargeType: "and_dischargetype",
     cancellationReason: "and_cancellationreason",
     isSubmitted: "and_is_submitted",
+    egyptVisit: "cr301_patientcodeegy",
+    businessUnit: "cr301_businessunit",
+  },
+  // Egypt Early Discharge rows look up ipd_visit through cr301_patientcodeegy.
+  ipdVisitFields: {
+    id: "ipd_visitid",
+    name: "ipd_name",
+    patientCode: "ipd_patientcode",
+    admissionStatus: "cpg_admissionstatus",
+    bed: "ipd_bedname",
+    floor: "ipd_floor",
+    physician: "ipd_doctorname",
+    specialty: "ipd_mainspecialty",
+    patient: "ipd_patient",
+  },
+  // ipd_visit shows the patient name as a related column; the Web API serves it from ipd_patient.
+  ipdPatientFields: {
+    id: "ipd_patientid",
+    name: "ipd_patientname",
+    patientCode: "ipd_patientcode",
   },
   delayReasonFields: {
     id: "and_delayreasonsid",

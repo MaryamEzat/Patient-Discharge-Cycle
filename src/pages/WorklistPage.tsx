@@ -12,6 +12,10 @@ import {
   activitySequence,
   type Activity,
 } from "../services/activityService";
+import {
+  egyptDischargeDelayState,
+  physicalDischargeDelayReason,
+} from "../services/egyptDischargeDelay";
 import { getPatientDisplayData } from "../presentation/reference";
 import {
   displayDateTime,
@@ -78,6 +82,8 @@ export const delayedWorklistColumns = [
   ["Unit / Nurse Station", "nurseStation"],
   ["Discharge Type", "dischargeType"],
   ["Physician Discharge", "physicianDischargeDate"],
+  ["Delay Reason Required", "delayReasonRequired"],
+  ["Delay Reason", "delayReason"],
   ["Current Discharge TAT", "currentDischargeTAT"],
   ["Longest Step", "longestStep"],
   ["Longest Step Duration", "longestStepDuration"],
@@ -125,6 +131,8 @@ export const columnWidths: Record<string, string> = {
   physicalDischargeTAT: "160px",
   slaCategory: "140px",
   egyptBusinessUnit: "130px",
+  delayReasonRequired: "170px",
+  delayReason: "200px",
   currentDischargeTAT: "175px",
   longestStep: "220px",
   longestStepDuration: "175px",
@@ -393,6 +401,15 @@ export function WorklistPage({
     }
     if (key === "egyptBusinessUnit")
       return egyptBusinessUnitFromEntityId(row.new_entityid) || "-";
+    if (key === "delayReasonRequired")
+      return egyptDischargeDelayState(row).isPhysicalDischargeDelayReasonRequired
+        ? "Yes"
+        : "No";
+    if (key === "delayReason") {
+      const activities = steps[row.crad2_patientdischargeid];
+      if (!activities) return "Loading...";
+      return physicalDischargeDelayReason(activities) || "-";
+    }
     if (key === "currentDischargeTAT")
       return formatDuration(row.cr301_currentdischargetat);
     if (key === "longestStepDuration")
@@ -479,7 +496,7 @@ export function WorklistPage({
             aria-pressed={view === "delayed"}
             onClick={() => setView("delayed")}
           >
-            Delayed Cases
+            Clinical Discharge Delays
           </button>
         </div>
       )}
@@ -498,16 +515,7 @@ export function WorklistPage({
         view={view}
       />
       {backgroundLoading && (
-        <div
-          style={{
-            padding: "6px 12px",
-            background: "rgba(30, 107, 72, 0.08)",
-            borderLeft: "3px solid #1e6b48",
-            margin: "8px 0",
-            fontSize: "0.85rem",
-            color: "#1e6b48",
-          }}
-        >
+        <div className="background-load-status">
           {statusMessage || "Loading earlier records in background..."}
         </div>
       )}
@@ -537,7 +545,7 @@ export function WorklistPage({
           message={
             statusMessage ||
             (view === "delayed"
-              ? "Loading delayed discharge cases..."
+              ? "Loading clinical discharge delays..."
               : loaded
                 ? `Loading today's discharges... ${loaded.toLocaleString()} records retrieved.`
                 : "Loading today's discharges...")
@@ -569,7 +577,7 @@ export function WorklistPage({
               {!visible.length && !Object.keys(columnFilters).length ? (
                 <div className="empty-state">
                   {view === "delayed"
-                    ? "No delayed discharge cases found."
+                    ? "No clinical discharge delays found."
                     : "No active discharge cases found."}
                 </div>
               ) : (
@@ -756,7 +764,7 @@ export function WorklistPage({
             {!visible.length ? (
               <div className="empty-state">
                 {view === "delayed"
-                  ? "No delayed discharge cases found."
+                  ? "No clinical discharge delays found."
                   : "No active discharge cases found."}
               </div>
             ) : (
@@ -855,6 +863,22 @@ export function WorklistPage({
                             </span>
                             <span className="mobile-card-value">
                               {formatDuration(r.cr301_longeststepduration)}
+                            </span>
+                          </div>
+                          <div className="mobile-card-row">
+                            <span className="mobile-card-label">
+                              Delay Reason Required:
+                            </span>
+                            <span className="mobile-card-value">
+                              {cellValue(r, p, current, "delayReasonRequired")}
+                            </span>
+                          </div>
+                          <div className="mobile-card-row">
+                            <span className="mobile-card-label">
+                              Delay Reason:
+                            </span>
+                            <span className="mobile-card-value">
+                              {cellValue(r, p, current, "delayReason")}
                             </span>
                           </div>
                         </>

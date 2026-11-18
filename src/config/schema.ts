@@ -7,6 +7,8 @@ import alert from "../../.power/schemas/dataverse/dischargealerts.Schema.json";
 import team from "../../.power/schemas/dataverse/teams.Schema.json";
 import user from "../../.power/schemas/dataverse/users.Schema.json";
 import delay from "../../.power/schemas/dataverse/delayreasons.Schema.json";
+import ipdVisit from "../../.power/schemas/dataverse/ipdvisits.Schema.json";
+import ipdPatient from "../../.power/schemas/dataverse/ipdpatients.Schema.json";
 
 // Adapt generated metadata, rather than duplicating Dataverse models.
 export interface Attribute {
@@ -41,6 +43,8 @@ export const tables = {
   team: team.name,
   user: user.name,
   delay: delay.name,
+  ipdVisit: ipdVisit.name,
+  ipdPatient: ipdPatient.name,
 };
 const schemas: TableSchema[] = [
   patient,
@@ -52,6 +56,8 @@ const schemas: TableSchema[] = [
   team,
   user,
   delay,
+  ipdVisit,
+  ipdPatient,
 ];
 export function recordTable(record: object): string | undefined {
   return schemas.find(

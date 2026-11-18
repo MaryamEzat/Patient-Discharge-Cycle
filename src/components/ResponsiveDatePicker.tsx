@@ -59,6 +59,18 @@ export function ResponsiveDatePicker({
       const below = offsetTop + viewportHeight - rect.bottom - 8;
       const above = rect.top - offsetTop - 8;
       const upwards = below < popupHeight && above > below;
+      if (below < popupHeight && above < popupHeight) {
+        // Short screens: no room on either side, so keep the whole calendar on screen over the field.
+        setPosition({
+          left,
+          width,
+          top:
+            offsetTop + Math.max(8, (viewportHeight - popupHeight) / 2),
+          bottom: undefined,
+          maxHeight: Math.max(0, viewportHeight - 16),
+        });
+        return;
+      }
       setPosition({
         left,
         width,

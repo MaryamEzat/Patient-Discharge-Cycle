@@ -26,6 +26,8 @@ export interface And_earlydischarge_ipdvisitsesBase {
   and_name: string;
   "and_PatientCode@odata.bind"?: string;
   "and_PatientDischarge@odata.bind"?: string;
+  "cr301_BusinessUnit@odata.bind"?: string;
+  "cr301_PatientCodeEGY@odata.bind"?: string;
   crda1_visitid?: string;
   importsequencenumber?: number;
   overriddencreatedon?: string;
@@ -41,6 +43,8 @@ export interface And_earlydischarge_ipdvisitses extends And_earlydischarge_ipdvi
   and_is_submitted?: string;
   and_patientcodename?: string;
   and_patientdischargename?: string;
+  cr301_businessunitname?: string;
+  cr301_patientcodeegyname?: string;
   createdbyname?: string;
   createdbyyominame: string;
   createdon?: string;
@@ -65,6 +69,10 @@ export interface And_earlydischarge_ipdvisitses extends And_earlydischarge_ipdvi
   _and_patientcode_value?: string;
   and_patientdischarge?: object;
   _and_patientdischarge_value?: string;
+  cr301_businessunit?: object;
+  _cr301_businessunit_value?: string;
+  cr301_patientcodeegy?: object;
+  _cr301_patientcodeegy_value?: string;
   createdby?: object;
   _createdby_value?: string;
   createdonbehalfby?: object;

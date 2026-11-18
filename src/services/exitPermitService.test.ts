@@ -7,6 +7,7 @@ import {
   buildExitPermitHtml,
   formatArabicDateTime,
   hasClearedPhysicalDischarge,
+  isExitPermitCompletionEvent,
   isExitPermitPhysicalClearEvent,
 } from "./exitPermitService";
 
@@ -30,12 +31,13 @@ const patient = (entityId: string): Patient =>
     statecode: 0,
   }) as unknown as Patient;
 
-const financialActivity = (cleared = true): Activity =>
+const financialActivity = (cleared = true, withDues = false): Activity =>
   ({
     crad2_dischargeactivityid: "22222222-2222-2222-2222-222222222222",
     crad2_subject: "Financial Discharge",
     crad2_status: cleared ? 408520000 : 100000000,
     crad2_actiondate: cleared ? "2026-10-14T09:45:00Z" : undefined,
+    cr301_withdues: withDues ? 293170000 : 293170001,
   }) as unknown as Activity;
 
 const physicalActivity = (cleared = true): Activity =>
@@ -133,7 +135,7 @@ describe("Egypt Exit Permit", () => {
     expect(permit?.financialClearanceDateTime).toBe("");
   });
 
-  it("uses the persisted Physical Discharge completion time without waiting for parent completion", () => {
+  it("uses the persisted Physical Discharge completion time and waits for parent completion", () => {
     const completed = buildExitPermitData(patient("1"), completedActivities());
     const inProgress = buildExitPermitData(
       { ...patient("1"), crad2_status: 408520001 },
@@ -142,8 +144,16 @@ describe("Egypt Exit Permit", () => {
     expect(completed?.completionDateTime).toMatch(/[٠-٩]+\/[٠-٩]+\/[٠-٩]+/);
     expect(completed?.completionDateTime).not.toMatch(/AM|PM/);
     expect(inProgress?.completionDateTime).toBe(completed?.completionDateTime);
-    expect(inProgress?.canGenerate).toBe(true);
+    expect(inProgress?.canGenerate).toBe(false);
     expect(hasClearedPhysicalDischarge(completedActivities())).toBe(true);
+  });
+
+  it("shows Cleared with Dues from the verified Egypt financial choice", () => {
+    const permit = buildExitPermitData(patient("1"), [
+      financialActivity(true, true),
+      physicalActivity(),
+    ]);
+    expect(permit?.financialStatus).toBe("Cleared with Dues");
   });
 
   it("does not allow generation after Financial Discharge alone", () => {
@@ -177,6 +187,27 @@ describe("Egypt Exit Permit", () => {
         physicalActivity(),
         "408520000",
         false,
+      ),
+    ).toBe(false);
+  });
+
+  it("recognizes permit readiness only when that clear event completes the parent", () => {
+    expect(
+      isExitPermitCompletionEvent(
+        408520001,
+        408520002,
+        physicalActivity(false),
+        "408520000",
+        true,
+      ),
+    ).toBe(true);
+    expect(
+      isExitPermitCompletionEvent(
+        408520001,
+        408520001,
+        physicalActivity(false),
+        "408520000",
+        true,
       ),
     ).toBe(false);
   });

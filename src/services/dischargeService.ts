@@ -6,12 +6,13 @@ import { getItemOrg, listRecordsOrg } from "./dataverseAdapter";
 import { getPatientDisplayData } from "../presentation/reference";
 import { dateKey } from "../presentation/format";
 import type { EgyptBusinessUnitEntityId } from "../scope/scope";
+import { egyptDischargeDelayState } from "./egyptDischargeDelay";
 
 export type Patient = Crad2_patientdischarges;
 export type DischargeView = "all" | "delayed";
 
 export const DELAYED_EGYPT_FILTER =
-  "cr301_currentdischargetat gt 120 and (new_entityid eq '1' or new_entityid eq '2' or new_entityid eq '4')";
+  "(new_entityid eq '1' or new_entityid eq '2' or new_entityid eq '4') and (crad2_status eq 408520000 or crad2_status eq 408520001)";
 
 export function columnFilterForView(view: DischargeView, columnFilter: string) {
   return view === "delayed"
@@ -130,7 +131,9 @@ export function sortPatientsByLatestActivity(rows: Iterable<Patient>) {
 
 export function buildSearchFilter(term: string): string {
   const safe = escapeOData(term.trim());
-  return `contains(crad2_patientname, '${safe}') or contains(new_patientid, '${safe}') or contains(and_visitid, '${safe}') or contains(crad2_phonenumber, '${safe}')`;
+  // crad2_visitid is the visit column on crad2_patientdischarge (and_visitid belongs to the inpatient
+  // list); an unknown column makes Dataverse reject the whole search.
+  return `contains(crad2_patientname, '${safe}') or contains(new_patientid, '${safe}') or contains(crad2_visitid, '${safe}') or contains(crad2_phonenumber, '${safe}')`;
 }
 
 export const dischargeService = {
@@ -262,7 +265,9 @@ export const dischargeService = {
       signal,
       onProgress,
     );
-    return sortDelayedPatients(rows.filter(isDelayedEgyptPatient));
+    return sortDelayedPatients(
+      rows.filter((row) => isDelayedEgyptPatient(row)),
+    );
   },
 
   async listForColumnFilters(
@@ -285,7 +290,7 @@ export const dischargeService = {
       signal,
     );
     return view === "delayed"
-      ? sortDelayedPatients(rows.filter(isDelayedEgyptPatient))
+      ? sortDelayedPatients(rows.filter((row) => isDelayedEgyptPatient(row)))
       : mergeAndSortPatients([], rows);
   },
 
@@ -321,11 +326,8 @@ export interface Filters {
   dateTo: string;
 }
 
-export function isDelayedEgyptPatient(row: Patient) {
-  return (
-    ["1", "2", "4"].includes(String(row.new_entityid ?? "").trim()) &&
-    Number(row.cr301_currentdischargetat) > 120
-  );
+export function isDelayedEgyptPatient(row: Patient, now = new Date()) {
+  return egyptDischargeDelayState(row, now).isClinicalDischargeDelayed;
 }
 
 export function sortDelayedPatients(rows: Patient[]) {

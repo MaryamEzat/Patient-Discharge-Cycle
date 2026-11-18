@@ -2,8 +2,10 @@ import { ResponsiveSelect } from "../components/ResponsiveSelect";
 import { useEffect, useState } from "react";
 import {
   earlyDischargeService,
+  earlyDraftBusinessUnit,
   isSubmitted,
   type Inpatient,
+  type IpdVisit,
 } from "../services/earlyDischargeService";
 import { useResource } from "../hooks/useResource";
 import {
@@ -15,12 +17,12 @@ import {
 import {
   getEarlyPatientDisplayData,
   getInpatientDisplayData,
+  getIpdVisitDisplayData,
 } from "../presentation/reference";
 import { tables } from "../config/schema";
 import { LoadingState } from "../components/LoadingState";
 import { ErrorState, errorMessage } from "../components/ErrorState";
 import { StatusBadge } from "../components/StatusBadge";
-import { useScope } from "../scope/ScopeContext";
 export function EarlyDraftPage({
   id,
   revision,
@@ -30,7 +32,6 @@ export function EarlyDraftPage({
   revision: number;
   back: () => void;
 }) {
-  const { value: scope } = useScope();
   const draft = useResource(
     () => earlyDischargeService.get(id),
     [id, revision],
@@ -43,31 +44,65 @@ export function EarlyDraftPage({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Inpatient[]>([]);
   const [selected, setSelected] = useState<Inpatient>();
+  const [visitResults, setVisitResults] = useState<IpdVisit[]>([]);
+  const [selectedVisit, setSelectedVisit] = useState<IpdVisit>();
   const [searchState, setSearchState] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const submitted = !!draft.data && isSubmitted(draft.data);
+  const businessUnit = earlyDraftBusinessUnit(draft.data);
+  const isAhjDraft = businessUnit === "AHJ";
+  const isEgyptDraft = ["ASH", "SMH", "AMH"].includes(businessUnit);
   useEffect(() => {
     let active = true;
     setSelected(undefined);
     setResults([]);
-    if (!type || query.trim().length < 2 || submitted) return;
-    setSearchState("Searching inpatients...");
+    setSelectedVisit(undefined);
+    setVisitResults([]);
+    if (
+      (!isAhjDraft && !isEgyptDraft) ||
+      !type ||
+      query.trim().length < 2 ||
+      submitted
+    )
+      return;
+    setSearchState(
+      isAhjDraft ? "Searching inpatients..." : "Searching IPD visits...",
+    );
     const t = setTimeout(
       () =>
-        scope && earlyDischargeService
-          .search(query.trim(), scope)
-          .then((rows) => {
-            if (active) {
-              setResults(rows);
+        (isAhjDraft
+          ? earlyDischargeService
+              .search(query.trim(), "Saudi Arabia")
+              .then((rows) => {
+                if (active) setResults(rows);
+                return rows.length;
+              })
+          : earlyDischargeService
+              .searchEgyptVisits(query.trim())
+              .then((rows) => {
+                if (active) setVisitResults(rows);
+                return rows.length;
+              })
+        )
+          .then((count) => {
+            if (active)
               setSearchState(
-                rows.length ? "" : "No matching inpatients found.",
+                count
+                  ? ""
+                  : isAhjDraft
+                    ? "No matching inpatients found."
+                    : "No matching IPD visits found.",
               );
-            }
           })
           .catch((e) => {
-            console.error("Inpatient search failed", e);
-            if (active) setSearchState("Unable to search inpatient list.");
+            console.error("Early Discharge patient search failed", e);
+            if (active)
+              setSearchState(
+                isAhjDraft
+                  ? "Unable to search inpatient list."
+                  : "Unable to search IPD visits.",
+              );
           }),
       350,
     );
@@ -75,22 +110,32 @@ export function EarlyDraftPage({
       active = false;
       clearTimeout(t);
     };
-  }, [query, type, submitted, scope]);
+  }, [query, type, submitted, isAhjDraft, isEgyptDraft]);
   async function add() {
-    if (!selected || !draft.data || busy) return;
+    if ((!selected && !selectedVisit) || !draft.data || busy) return;
     setBusy(true);
     setMessage("");
     let created = false;
     try {
-      await earlyDischargeService.add(draft.data, selected, type);
+      if (isEgyptDraft && selectedVisit)
+        await earlyDischargeService.addEgypt(draft.data, selectedVisit, type);
+      else if (isAhjDraft && selected)
+        await earlyDischargeService.add(draft.data, selected, type);
+      else return;
       created = true;
       setSelected(undefined);
+      setSelectedVisit(undefined);
       setQuery("");
       setResults([]);
+      setVisitResults([]);
       const rows = await earlyDischargeService.children(id);
       patients.setData(rows);
       draft.refresh();
-      setMessage("The inpatient row was added to this Early Discharge draft.");
+      setMessage(
+        isEgyptDraft
+          ? "The IPD visit was added to this Early Discharge draft."
+          : "The inpatient row was added to this Early Discharge draft.",
+      );
     } catch (e) {
       console.error("Draft add failed", e);
       setMessage(
@@ -129,6 +174,35 @@ export function EarlyDraftPage({
     "createdon",
   ]);
   const status = displayChoice(d, tables.early, "and_statusnew");
+  const patientColumns = isAhjDraft
+    ? [
+        ["dischargeType", "Discharge Type"],
+        ["patientCode", "Patient Code"],
+        ["patientName", "Patient Name"],
+        ["visitId", "Visit ID"],
+        ["room", "Room"],
+        ["bed", "Bed"],
+        ["nurseStation", "Nurse Station"],
+        ["physician", "Physician"],
+        ["admissionDoctor", "Admission Doctor"],
+        ["specialty", "Specialty"],
+        ["admissionDate", "Admission Date"],
+        ["cancellationReason", "Cancellation Reason"],
+        ["isSubmitted", "Submitted"],
+      ] as const
+    : [
+        ["dischargeType", "Discharge Type"],
+        ["visitId", "Visit ID"],
+        ["patientCode", "Patient Code"],
+        ["patientName", "Patient Name"],
+        ["admissionStatus", "Admission Status"],
+        ["floor", "Floor"],
+        ["bed", "Bed"],
+        ["physician", "Physician"],
+        ["specialty", "Specialty"],
+        ["cancellationReason", "Cancellation Reason"],
+        ["isSubmitted", "Submitted"],
+      ] as const;
   return (
     <section className="patient-panel">
       <div className="patient-header-bar">
@@ -180,7 +254,7 @@ export function EarlyDraftPage({
               Status: <strong>{status}</strong>
             </span>
             <span className="meta-badge">
-              Total Patients:{" "}
+              Draft Rows:{" "}
               <strong>
                 {patients.loading ? "..." : (patients.data?.length ?? 0)}
               </strong>
@@ -198,8 +272,9 @@ export function EarlyDraftPage({
         <section className="early-draft-overview">
           {[
             ["Status", status],
+            ["Business Unit", businessUnit || "Unknown"],
             [
-              "Patients",
+              "Draft Rows",
               patients.loading ? "..." : String(patients.data?.length ?? 0),
             ],
             ["Created", displayDateTime(d, "createdon")],
@@ -230,7 +305,14 @@ export function EarlyDraftPage({
             {message}
           </div>
         )}
+        {!isAhjDraft && !isEgyptDraft && (
+          <div role="status" className="section-surface notice">
+            This draft's Business Unit is unavailable or unsupported. Patient
+            selection is disabled.
+          </div>
+        )}
         <section className="early-draft-layout">
+          {(isAhjDraft || isEgyptDraft) && (
           <div className="early-add-panel">
             <div className="early-panel-head">
               <div>
@@ -252,6 +334,7 @@ export function EarlyDraftPage({
                     setType(value);
                     setQuery("");
                     setSelected(undefined);
+                    setSelectedVisit(undefined);
                   }}
                 >
                   <option value="">Select type</option>
@@ -265,7 +348,11 @@ export function EarlyDraftPage({
                 </label>
                 <input
                   id="earlySearch"
-                  placeholder="Search inpatient by patient code or name"
+                  placeholder={
+                    isEgyptDraft
+                      ? "Search IPD visit by visit, patient code or name"
+                      : "Search inpatient by patient code or name"
+                  }
                   value={query}
                   disabled={submitted || busy || !type}
                   onChange={(e) => setQuery(e.target.value)}
@@ -284,6 +371,29 @@ export function EarlyDraftPage({
                   </div>
                 ) : searchState ? (
                   <div className="small">{searchState}</div>
+                ) : isEgyptDraft ? (
+                  visitResults.map((row) => {
+                    const v = getIpdVisitDisplayData(row);
+                    return (
+                      <button
+                        type="button"
+                        key={row.ipd_visitid}
+                        disabled={busy}
+                        className={`patient-result ${selectedVisit?.ipd_visitid === row.ipd_visitid ? "selected" : ""}`}
+                        onClick={() => setSelectedVisit(row)}
+                      >
+                        <div className="name">
+                          {v.patientName || "Patient name unavailable"} — Visit{" "}
+                          {v.visitId || "-"}
+                        </div>
+                        <div className="meta">
+                          Patient Code: {v.patientCode || "-"} |{" "}
+                          {v.admissionStatus || "-"} | {v.floor || "-"} /{" "}
+                          {v.bed || "-"}
+                        </div>
+                      </button>
+                    );
+                  })
                 ) : (
                   results.map((row) => {
                     const p = getInpatientDisplayData(row);
@@ -312,13 +422,18 @@ export function EarlyDraftPage({
                   {selected.and_patientname || selected.and_name} selected
                 </div>
               )}
+              {selectedVisit && (
+                <div className="small">
+                  Visit {selectedVisit.ipd_name} selected
+                </div>
+              )}
               <div className="form-actions">
                 <button
                   className="btn-primary"
                   disabled={
                     submitted ||
                     busy ||
-                    !selected ||
+                    !(isEgyptDraft ? selectedVisit : selected) ||
                     !type ||
                     patients.loading ||
                     !!patients.error
@@ -330,23 +445,24 @@ export function EarlyDraftPage({
               </div>
             </div>
           </div>
+          )}
           <div className="early-patient-panel">
             <div className="early-panel-head">
               <div>
-                <div className="panel-label">Patients In Draft</div>
-                <div className="early-panel-title">Draft Patient List</div>
+                <div className="panel-label">Rows In Draft</div>
+                <div className="early-panel-title">Draft Rows</div>
               </div>
               <button onClick={patients.refresh} disabled={busy}>
                 Refresh
               </button>
             </div>
             {patients.loading ? (
-              <LoadingState message="Loading patients..." />
+              <LoadingState message="Loading draft rows..." />
             ) : patients.error ? (
               <ErrorState error={patients.error} retry={patients.refresh} />
             ) : !patients.data?.length ? (
               <div className="small">
-                No patients have been added to this draft.
+                No draft rows are available.
               </div>
             ) : (
               <div className="draft-existing">
@@ -354,21 +470,7 @@ export function EarlyDraftPage({
                 <table className="worklist-table">
                   <thead>
                     <tr>
-                      {[
-                        "Discharge Type",
-                        "Patient Code",
-                        "Patient Name",
-                        "Visit ID",
-                        "Room",
-                        "Bed",
-                        "Nurse Station",
-                        "Physician",
-                        "Admission Doctor",
-                        "Specialty",
-                        "Admission Date",
-                        "Cancellation Reason",
-                        "Submitted",
-                      ].map((h) => (
+                      {patientColumns.map(([, h]) => (
                         <th key={h}>{h}</th>
                       ))}
                     </tr>
@@ -381,21 +483,7 @@ export function EarlyDraftPage({
                       >;
                       return (
                         <tr key={row.and_earlydischarge_ipdvisitsid}>
-                          {[
-                            "dischargeType",
-                            "patientCode",
-                            "patientName",
-                            "visitId",
-                            "room",
-                            "bed",
-                            "nurseStation",
-                            "physician",
-                            "admissionDoctor",
-                            "specialty",
-                            "admissionDate",
-                            "cancellationReason",
-                            "isSubmitted",
-                          ].map((k) => (
+                          {patientColumns.map(([k]) => (
                             <td key={k}>{p[k] || "-"}</td>
                           ))}
                         </tr>
@@ -408,16 +496,9 @@ export function EarlyDraftPage({
                   {patients.data.map((row) => {
                     const p = getEarlyPatientDisplayData(row) as Record<string, string>;
                     return <article className="mobile-patient-card" key={row.and_earlydischarge_ipdvisitsid}>
-                      <strong className="mobile-patient-name">{p.patientName || "-"}</strong>
+                      <strong className="mobile-patient-name">{p.patientName || p.patientCode || "Blank placeholder"}</strong>
                       <dl className="early-card-details">
-                        {[
-                          ["dischargeType", "Discharge Type"], ["patientCode", "Patient Code"],
-                          ["visitId", "Visit ID"], ["room", "Room"], ["bed", "Bed"],
-                          ["nurseStation", "Nurse Station"], ["physician", "Physician"],
-                          ["admissionDoctor", "Admission Doctor"], ["specialty", "Specialty"],
-                          ["admissionDate", "Admission Date"], ["cancellationReason", "Cancellation Reason"],
-                          ["isSubmitted", "Submitted"],
-                        ].map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{p[key] || "-"}</dd></div>)}
+                        {patientColumns.map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{p[key] || "-"}</dd></div>)}
                       </dl>
                     </article>;
                   })}

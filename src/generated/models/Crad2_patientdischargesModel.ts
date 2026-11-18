@@ -55,6 +55,8 @@ export interface Crad2_patientdischargesBase {
   cr301_filedeliverydatetime?: string;
   cr301_longeststep?: string;
   cr301_longeststepduration?: number;
+  "cr301_PatientCodeAMH@odata.bind"?: string;
+  "cr301_PatientCodeANC@odata.bind"?: string;
   cr301_patientnationality?: string;
   "cr603_Patient@odata.bind"?: string;
   crad2_admissiondate?: string;
@@ -111,6 +113,8 @@ export interface Crad2_patientdischarges extends Crad2_patientdischargesBase {
   and_physiciandischargedate?: string;
   and_slacategory?: string;
   cr301_filescanstatus?: string;
+  cr301_patientcodeamhname?: string;
+  cr301_patientcodeancname?: string;
   cr603_patientname?: string;
   crad2_losdays?: number;
   crad2_pendingonname?: string;
@@ -138,6 +142,10 @@ export interface Crad2_patientdischarges extends Crad2_patientdischargesBase {
   versionnumber?: number;
   and_patientcode?: object;
   _and_patientcode_value?: string;
+  cr301_patientcodeamh?: object;
+  _cr301_patientcodeamh_value?: string;
+  cr301_patientcodeanc?: object;
+  _cr301_patientcodeanc_value?: string;
   cr603_patient?: object;
   _cr603_patient_value?: string;
   createdby?: object;

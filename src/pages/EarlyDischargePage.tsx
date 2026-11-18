@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useResource } from "../hooks/useResource";
 import {
   earlyDischargeService,
+  earlyDraftBusinessUnit,
   type Draft,
 } from "../services/earlyDischargeService";
 import {
@@ -95,6 +96,7 @@ export function EarlyDischargePage({
                   <tr>
                     {[
                       "Discharge Date",
+                      "Business Unit",
                       "Status",
                       "Count Of Patients",
                       "Submission Date",
@@ -122,6 +124,7 @@ export function EarlyDischargePage({
                           ])}
                         </button>
                       </td>
+                      <td>{earlyDraftBusinessUnit(d) || "-"}</td>
                       <td>
                         <StatusBadge
                           label={displayChoice(d, tables.early, "and_statusnew")}
@@ -148,6 +151,7 @@ export function EarlyDischargePage({
                       <StatusBadge label={displayChoice(d, tables.early, "and_statusnew")} />
                     </div>
                     <dl className="early-card-details">
+                      <div><dt>Business Unit</dt><dd>{earlyDraftBusinessUnit(d) || "-"}</dd></div>
                       <div><dt>Count Of Patients</dt><dd>{displayValue(d, "crda1_countofpatients", null, "0")}</dd></div>
                       <div><dt>Submission Date</dt><dd>{displayDateTime(d, "and_submissiondate")}</dd></div>
                       <div><dt>Submitted By</dt><dd>{displayValue(d, "_and_submittedby_value")}</dd></div>

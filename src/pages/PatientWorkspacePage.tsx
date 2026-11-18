@@ -25,9 +25,12 @@ import { ErrorState, errorMessage } from "../components/ErrorState";
 import { RecordLink } from "../components/RecordLink";
 import { Modal } from "../components/Modal";
 import { egyptBusinessUnitFromEntityId } from "../scope/scope";
+import { egyptDischargeDelayState } from "../services/egyptDischargeDelay";
 import {
+  COMPLETED_PATIENT_STATUS,
   exitPermitService,
   hasClearedPhysicalDischarge,
+  isExitPermitCompletionEvent,
   isExitPermitPhysicalClearEvent,
   openExitPermitPreview,
   openPreparingExitPermitWindow,
@@ -54,6 +57,7 @@ export function PatientWorkspacePage({
   const [permitBusy, setPermitBusy] = useState(false);
   const [permitError, setPermitError] = useState("");
   const [completionPermitReady, setCompletionPermitReady] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const cancellation = useRef<AbortController | undefined>(undefined);
   useEffect(() => () => cancellation.current?.abort(), [id]);
   const isEgyptPatient = Boolean(
@@ -62,6 +66,18 @@ export function PatientWorkspacePage({
   const physicalDischargeCleared = hasClearedPhysicalDischarge(
     resource.data?.activities || [],
   );
+  const patientDischargeCompleted =
+    resource.data?.parent.crad2_status === COMPLETED_PATIENT_STATUS;
+  const physicalDelayReasonRequired = resource.data
+    ? egyptDischargeDelayState(resource.data.parent, currentTime)
+        .isPhysicalDischargeDelayReasonRequired
+    : false;
+  useEffect(() => {
+    if (!isEgyptPatient) return;
+    setCurrentTime(new Date());
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 30000);
+    return () => window.clearInterval(timer);
+  }, [isEgyptPatient]);
   const sequence = resource.data
     ? activitySequence(
         resource.data.activities,
@@ -79,7 +95,7 @@ export function PatientWorkspacePage({
       setExpectHomeMedications(false);
   }, [expectHomeMedications, resource.data]);
   async function save(input: ActivityInput) {
-    if (!active || busy) return;
+    if (!active || !resource.data || busy) return;
     const controller = new AbortController();
     cancellation.current?.abort();
     cancellation.current = controller;
@@ -91,17 +107,27 @@ export function PatientWorkspacePage({
       Number(input.homeMedicationDispensingRequired) ===
         HOME_MEDICATION_DISPENSING_YES &&
       isEgyptPatient;
-    const showPermitAfterPhysicalClear = isExitPermitPhysicalClearEvent(
+    const isPhysicalCompletionAttempt = isExitPermitPhysicalClearEvent(
       active,
       input.action,
       isEgyptPatient,
     );
+    const activityValidation = {
+      physicalDelayReasonRequired: egyptDischargeDelayState(
+        resource.data.parent,
+        new Date(),
+      ).isPhysicalDischargeDelayReasonRequired,
+      isEgyptPatient,
+    };
     try {
-      buildActivityPayload(active, input);
+      buildActivityPayload(active, input, activityValidation);
       if (waitForHomeMedications) setExpectHomeMedications(true);
       const before = await captureDischargeWorkflowState(id);
+      const shouldWaitForCompletion =
+        isPhysicalCompletionAttempt &&
+        before.parent.crad2_status !== COMPLETED_PATIENT_STATUS;
       controller.signal.throwIfAborted();
-      await activityService.save(active, input);
+      await activityService.save(active, input, activityValidation);
       saved = true;
       onChanged();
       setMessage("Loading...");
@@ -110,17 +136,17 @@ export function PatientWorkspacePage({
       const baseline = await captureDischargeWorkflowState(id);
       controller.signal.throwIfAborted();
       resource.setData(baseline);
-      if (showPermitAfterPhysicalClear) {
-        setMessage("");
-        setCompletionPermitReady(true);
-      }
+      let latest = baseline;
       const workflowChanged =
         workflowSignal(before, active.crad2_dischargeactivityid) !==
         workflowSignal(baseline, active.crad2_dischargeactivityid);
       const expectedActivityLoaded =
         !waitForHomeMedications ||
         hasHomeMedicationsActivity(baseline.activities);
-      if (workflowChanged && expectedActivityLoaded) {
+      const expectedCompletionLoaded =
+        !shouldWaitForCompletion ||
+        baseline.parent.crad2_status === COMPLETED_PATIENT_STATUS;
+      if (workflowChanged && expectedActivityLoaded && expectedCompletionLoaded) {
         setMessage("");
       } else {
         const result = await pollDischargeWorkflow(
@@ -129,21 +155,36 @@ export function PatientWorkspacePage({
           active.crad2_dischargeactivityid,
           resource.setData,
           controller.signal,
-          waitForHomeMedications
+          waitForHomeMedications || shouldWaitForCompletion
             ? {
                 acceptChange: (snapshot) =>
-                  hasHomeMedicationsActivity(snapshot.activities),
+                  waitForHomeMedications
+                    ? hasHomeMedicationsActivity(snapshot.activities)
+                    : snapshot.parent.crad2_status ===
+                      COMPLETED_PATIENT_STATUS,
               }
             : undefined,
         );
-        if (!showPermitAfterPhysicalClear)
-          setMessage(
-            result.changed
-              ? ""
-              : result.failures
-                ? "Activity saved. Some workflow refreshes failed. Refresh to check the current state."
-                : "Activity saved. Workflow update is still processing.",
-          );
+        latest = result.snapshot;
+        setMessage(
+          result.changed
+            ? ""
+            : result.failures
+              ? "Activity saved. Some workflow refreshes failed. Refresh to check the current state."
+              : "Activity saved. Workflow update is still processing.",
+        );
+      }
+      if (
+        isExitPermitCompletionEvent(
+          before.parent.crad2_status,
+          latest.parent.crad2_status,
+          active,
+          input.action,
+          isEgyptPatient,
+        )
+      ) {
+        setMessage("");
+        setCompletionPermitReady(true);
       }
       setFormVersion((v) => v + 1);
       onChanged();
@@ -164,9 +205,12 @@ export function PatientWorkspacePage({
   }
   async function generateExitPermit() {
     if (!resource.data || permitBusy) return;
-    if (!hasClearedPhysicalDischarge(resource.data.activities)) {
+    if (
+      resource.data.parent.crad2_status !== COMPLETED_PATIENT_STATUS ||
+      !hasClearedPhysicalDischarge(resource.data.activities)
+    ) {
       setPermitError(
-        "The Exit Permit becomes available after Physical Discharge is cleared.",
+        "The Exit Permit becomes available after Physical Discharge is cleared and the Patient Discharge is completed.",
       );
       return;
     }
@@ -190,7 +234,7 @@ export function PatientWorkspacePage({
       if (!permit.canGenerate) {
         preview.close();
         setPermitError(
-          "The completed Financial and Physical Discharge timestamps could not be verified. Refresh the record and try again.",
+          "The completed Patient, Financial, and Physical Discharge state could not be verified. Refresh the record and try again.",
         );
         return;
       }
@@ -222,7 +266,12 @@ export function PatientWorkspacePage({
               <button
                 type="button"
                 className="btn-outline-modern exit-permit-action"
-                disabled={busy || permitBusy || !physicalDischargeCleared}
+                disabled={
+                  busy ||
+                  permitBusy ||
+                  !physicalDischargeCleared ||
+                  !patientDischargeCompleted
+                }
                 onClick={generateExitPermit}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -283,6 +332,8 @@ export function PatientWorkspacePage({
               onSave={save}
               busy={busy}
               refresh={resource.refresh}
+              physicalDelayReasonRequired={physicalDelayReasonRequired}
+              isEgyptPatient={isEgyptPatient}
             />
           ) : (
             <div className="activity-form">No activity selected.</div>
@@ -341,12 +392,12 @@ export function PatientWorkspacePage({
       )}
       {completionPermitReady && (
         <Modal
-          title="Physical Discharge Cleared"
+          title="Discharge Completed"
           close={() => setCompletionPermitReady(false)}
         >
           <div className="modal-result">
             <p className="small" style={{ marginBottom: "16px" }}>
-              Physical Discharge has been cleared successfully. The Exit Permit is ready to download.
+              The Patient Discharge has completed successfully. The Exit Permit is ready to download.
             </p>
             <div className="form-actions">
               <button
